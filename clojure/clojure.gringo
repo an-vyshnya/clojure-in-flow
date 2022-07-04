@@ -67,6 +67,9 @@ cs = " " | "\t" | "\n" | "," | ";" (!"\n" anychar)* "\n";
 
 lastLineComment = ";" (!"\n" anychar)*;
 
-program = ws form lastLineComment?;	// TODO: multiple forms!
+// Clojure program isn't a form, but a sequence of forms. For the sake of consistency we wrap it in implicit "do"
+do_forms = forms $"do";
+
+program = ws do_forms lastLineComment?;
 
 program

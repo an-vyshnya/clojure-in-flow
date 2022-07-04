@@ -36,8 +36,13 @@ export {
 		CUnqoteSplicing();
 
 	pushCList(list : CList, value : Clojure) -> CList;
+	consCList(list : CList, value : Clojure) -> CList;
 }
 
 pushCList(list : CList, value : Clojure) -> CList {
 	CList(arrayPush(list.values, value))
+}
+
+consCList(list : CList, value : Clojure) -> CList {
+	CList(concat([value], list.values))
 }

@@ -115,6 +115,9 @@ clojureTypeAction(code : string, onError : (string) -> void) -> GringoAction<Lis
 						CString(t): CChar(t)
 						default: v; 	// Not good
 					}
+				}),
+				Pair("do", \l -> {
+					consCList(getClojureList(l), CSymbol("do", ""))
 				})
 			]),
 			pairs2tree([
@@ -149,7 +152,13 @@ main() {
 	(def
 		^{:macro true
 			:added \"1.0\"}
-		let (fn* let [&form &env & decl] (cons 'let* decl)))";
+		let (fn* let [&form &env & decl] (cons 'let* decl)))
+		
+		
+	(def
+		^{:macro true
+		:added \"1.0\"}
+		loop (fn* loop [&form &env & decl] (cons 'loop* decl)))";
 	ast = parseClojure(p6, println);
 	println(ast);
 

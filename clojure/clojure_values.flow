@@ -5,6 +5,7 @@ export {
 
 	getClojureString(clj : Clojure) -> string;
 	getClojureInt(clj : Clojure) -> int;
+	getClojureList(clj : Clojure) -> CList;
 }
 
 getClojureString(clj : Clojure) -> string {
@@ -18,5 +19,12 @@ getClojureInt(clj : Clojure) -> int {
 	switch (clj : Clojure) {
 		CInt(i): i
 		default: 0;
+	}
+}
+
+getClojureList(clj : Clojure) -> CList {
+	switch (clj : Clojure) {
+		CList(l): clj
+		default: CList([])
 	}
 }

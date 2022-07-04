@@ -728,10 +728,24 @@ parse_lastLineComment(acc : DParseAcc<?>) -> bool {
 	}
 }
 
+parse_do_forms(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		if (parse_forms(acc)) {
+			{
+				addVerbatim(acc, "do");
+				discardDCheckpoint(acc)
+			}
+		} else {
+			restoreDCheckpoint(acc)
+		}
+	}
+}
+
 parse_program(acc : DParseAcc<?>) -> bool {
 	{
 		pushDCheckpoint(acc);
-		if ((parse_ws(acc) && parse_form(acc))) {
+		if ((parse_ws(acc) && parse_do_forms(acc))) {
 			{
 				pushDCheckpoint(acc);
 				if (parse_lastLineComment(acc)) {
@@ -746,6 +760,7 @@ parse_program(acc : DParseAcc<?>) -> bool {
 		}
 	}
 }
+
 
 
 
