@@ -120,6 +120,15 @@ clojureTypeAction(code : string, onError : (string) -> void) -> GringoAction<Lis
 			pairs2tree([
 				Pair("ratio", \num, den -> {
 					CRatio(s2i(getClojureString(num)), s2i(getClojureString(den)))
+				}),
+				Pair("metadata", \meta, expr -> {
+					metamap = switch (meta : Clojure) {
+						CMap(__): meta
+						CSymbol(__, __): CMap([Pair(CKeyword("tag", ""), idfn(meta))])	// tag should be qualified? // "resolve" instead of "idfn"
+						CKeyword(__, __): CMap([Pair(meta, CBoolean(true))])
+						default: CMap([])
+					}
+					CReaderMacro(CMetadata(metamap), expr)
 				})
 			]),
 			makeTree(),
@@ -135,7 +144,13 @@ main() {
 	p2 = "(22/7 44/5 true false nil)";
 	p3 = "(asd, 'ert @aaa `qwe ~jjj ~@hkhkj)";
 	p4 = "(\\a \\r \\y)";
-	ast = parseClojure("(map #(+ % 5) [1 2 3])", println);
+	p5 = "(map #(+ % 5) [1 2 3])";
+	p6 = "
+	(def
+		^{:macro true
+			:added \"1.0\"}
+		let (fn* let [&form &env & decl] (cons 'let* decl)))";
+	ast = parseClojure(p6, println);
 	println(ast);
 
 	quit(0);

@@ -26,10 +26,10 @@ export {
 	CSet(values : [Clojure]);
 
 	CReaderMacro(macro : CReaderMacroType, value : Clojure);
-	CReaderMacroType ::= CQuote, CDeref, /* CMetadata, */ CDispatch, CSyntaxQuote, CUnquote, CUnqoteSplicing;
+	CReaderMacroType ::= CQuote, CDeref, CMetadata, CDispatch, CSyntaxQuote, CUnquote, CUnqoteSplicing;
 		CQuote(); 
 		CDeref(); 
-		// CMetadata(); // Do we need it? 
+		CMetadata(meta : CMap);
 		CDispatch(); 
 		CSyntaxQuote(); 
 		CUnquote(); 

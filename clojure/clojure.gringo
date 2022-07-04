@@ -23,6 +23,7 @@ form =
 		| "`" form $"syntax_quote"
 		| "~" form $"unquote"
 		| "~@" form $"unquote_splicing"
+		| "^" form cs+ form $"metadata"
 	);
 
 forms = $"list" form $"cons" (cs+ form $"cons")* ws? 
@@ -54,7 +55,7 @@ symbol = $symbol_;
 symbol_ = nonnumeric (alphanumeric)*;
 
 alphanumeric = nonnumeric | '0'-'9';
-nonnumeric = 'a'-'z' | 'A'-'Z' | '_' | '*' | '+' | '!' | '-' | '_' | '?' | '<' | '>' | '=' | '%';
+nonnumeric = 'a'-'z' | 'A'-'Z' | '_' | '*' | '+' | '!' | '-' | '_' | '?' | '<' | '>' | '=' | '%' | '&';
 
 int = $'0'-'9'+;
 

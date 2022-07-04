@@ -332,7 +332,37 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																																				}) {
 																																					discardDCheckpoint(acc)
 																																				} else {
-																																					restoreDCheckpoint(acc)
+																																					{
+																																						pushDCheckpoint(acc);
+																																						if (if ((matchString(acc, "^") && parse_form(acc))) {
+																																							{
+																																								pushDCheckpoint(acc);
+																																								if (((if (parse_cs(acc)) {
+																																									{
+																																										parseStar(acc, \ -> {
+																																											parse_cs(acc)
+																																										});
+																																										discardDCheckpoint(acc)
+																																									}
+																																								} else {
+																																									restoreDCheckpoint(acc)
+																																								}) && parse_form(acc))) {
+																																									{
+																																										addVerbatim(acc, "metadata");
+																																										discardDCheckpoint(acc)
+																																									}
+																																								} else {
+																																									restoreDCheckpoint(acc)
+																																								}
+																																							}
+																																						} else {
+																																							restoreDCheckpoint(acc)
+																																						}) {
+																																							discardDCheckpoint(acc)
+																																						} else {
+																																							restoreDCheckpoint(acc)
+																																						}
+																																					}
 																																				}
 																																			}
 																																		}
@@ -612,7 +642,7 @@ parse_alphanumeric(acc : DParseAcc<?>) -> bool {
 }
 
 parse_nonnumeric(acc : DParseAcc<?>) -> bool {
-	matchRange(acc, 97, 122) || (matchRange(acc, 65, 90) || (matchString(acc, "_") || (matchString(acc, "*") || (matchString(acc, "+") || (matchString(acc, "!") || (matchString(acc, "-") || (matchString(acc, "_") || (matchString(acc, "?") || (matchString(acc, "<") || (matchString(acc, ">") || (matchString(acc, "=") || matchString(acc, "%"))))))))))))
+	matchRange(acc, 97, 122) || (matchRange(acc, 65, 90) || (matchString(acc, "_") || (matchString(acc, "*") || (matchString(acc, "+") || (matchString(acc, "!") || (matchString(acc, "-") || (matchString(acc, "_") || (matchString(acc, "?") || (matchString(acc, "<") || (matchString(acc, ">") || (matchString(acc, "=") || (matchString(acc, "%") || matchString(acc, "&")))))))))))))
 }
 
 parse_int(acc : DParseAcc<?>) -> bool {
