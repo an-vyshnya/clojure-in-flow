@@ -17,6 +17,7 @@ form =
 		| "[" ws forms "]" $"vector"
 		| "(" ws forms ")" $"clist"
 		| "{" ws forms "}" $"map"
+		| "#{" ws forms "}" $"set"
 		| "'" form $"quote"
 		| "@" form $"deref"
 		| "#" form $"dispatch"

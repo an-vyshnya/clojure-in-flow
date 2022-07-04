@@ -262,9 +262,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																								} else {
 																									{
 																										pushDCheckpoint(acc);
-																										if (if ((matchString(acc, "'") && parse_form(acc))) {
+																										if (if ((matchString(acc, "#{") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, "}"))))))) {
 																											{
-																												addVerbatim(acc, "quote");
+																												addVerbatim(acc, "set");
 																												discardDCheckpoint(acc)
 																											}
 																										} else {
@@ -274,9 +274,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																										} else {
 																											{
 																												pushDCheckpoint(acc);
-																												if (if ((matchString(acc, "@") && parse_form(acc))) {
+																												if (if ((matchString(acc, "'") && parse_form(acc))) {
 																													{
-																														addVerbatim(acc, "deref");
+																														addVerbatim(acc, "quote");
 																														discardDCheckpoint(acc)
 																													}
 																												} else {
@@ -286,9 +286,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																												} else {
 																													{
 																														pushDCheckpoint(acc);
-																														if (if ((matchString(acc, "#") && parse_form(acc))) {
+																														if (if ((matchString(acc, "@") && parse_form(acc))) {
 																															{
-																																addVerbatim(acc, "dispatch");
+																																addVerbatim(acc, "deref");
 																																discardDCheckpoint(acc)
 																															}
 																														} else {
@@ -298,9 +298,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																														} else {
 																															{
 																																pushDCheckpoint(acc);
-																																if (if ((matchString(acc, "`") && parse_form(acc))) {
+																																if (if ((matchString(acc, "#") && parse_form(acc))) {
 																																	{
-																																		addVerbatim(acc, "syntax_quote");
+																																		addVerbatim(acc, "dispatch");
 																																		discardDCheckpoint(acc)
 																																	}
 																																} else {
@@ -310,9 +310,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																																} else {
 																																	{
 																																		pushDCheckpoint(acc);
-																																		if (if ((matchString(acc, "~") && parse_form(acc))) {
+																																		if (if ((matchString(acc, "`") && parse_form(acc))) {
 																																			{
-																																				addVerbatim(acc, "unquote");
+																																				addVerbatim(acc, "syntax_quote");
 																																				discardDCheckpoint(acc)
 																																			}
 																																		} else {
@@ -322,9 +322,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																																		} else {
 																																			{
 																																				pushDCheckpoint(acc);
-																																				if (if ((matchString(acc, "~@") && parse_form(acc))) {
+																																				if (if ((matchString(acc, "~") && parse_form(acc))) {
 																																					{
-																																						addVerbatim(acc, "unquote_splicing");
+																																						addVerbatim(acc, "unquote");
 																																						discardDCheckpoint(acc)
 																																					}
 																																				} else {
@@ -334,33 +334,47 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																																				} else {
 																																					{
 																																						pushDCheckpoint(acc);
-																																						if (if ((matchString(acc, "^") && parse_form(acc))) {
+																																						if (if ((matchString(acc, "~@") && parse_form(acc))) {
 																																							{
-																																								pushDCheckpoint(acc);
-																																								if (((if (parse_cs(acc)) {
-																																									{
-																																										parseStar(acc, \ -> {
-																																											parse_cs(acc)
-																																										});
-																																										discardDCheckpoint(acc)
-																																									}
-																																								} else {
-																																									restoreDCheckpoint(acc)
-																																								}) && parse_form(acc))) {
-																																									{
-																																										addVerbatim(acc, "metadata");
-																																										discardDCheckpoint(acc)
-																																									}
-																																								} else {
-																																									restoreDCheckpoint(acc)
-																																								}
+																																								addVerbatim(acc, "unquote_splicing");
+																																								discardDCheckpoint(acc)
 																																							}
 																																						} else {
 																																							restoreDCheckpoint(acc)
 																																						}) {
 																																							discardDCheckpoint(acc)
 																																						} else {
-																																							restoreDCheckpoint(acc)
+																																							{
+																																								pushDCheckpoint(acc);
+																																								if (if ((matchString(acc, "^") && parse_form(acc))) {
+																																									{
+																																										pushDCheckpoint(acc);
+																																										if (((if (parse_cs(acc)) {
+																																											{
+																																												parseStar(acc, \ -> {
+																																													parse_cs(acc)
+																																												});
+																																												discardDCheckpoint(acc)
+																																											}
+																																										} else {
+																																											restoreDCheckpoint(acc)
+																																										}) && parse_form(acc))) {
+																																											{
+																																												addVerbatim(acc, "metadata");
+																																												discardDCheckpoint(acc)
+																																											}
+																																										} else {
+																																											restoreDCheckpoint(acc)
+																																										}
+																																									}
+																																								} else {
+																																									restoreDCheckpoint(acc)
+																																								}) {
+																																									discardDCheckpoint(acc)
+																																								} else {
+																																									restoreDCheckpoint(acc)
+																																								}
+																																							}
 																																						}
 																																					}
 																																				}

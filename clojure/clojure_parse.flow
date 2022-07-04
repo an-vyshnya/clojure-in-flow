@@ -67,6 +67,12 @@ clojureTypeAction(code : string, onError : (string) -> void) -> GringoAction<Lis
 						default: CMap([])
 					}
 				}),
+				Pair("set", \l -> {
+					switch (l : Clojure) {
+						CList(values): CSet(values)
+						default: CSet([])
+					}
+				}),
 				Pair("hex", \v -> {
 					value = switch (v : Clojure) {
 						CString(hex): parseHex(hex);
@@ -159,7 +165,7 @@ main() {
 		^{:macro true
 		:added \"1.0\"}
 		loop (fn* loop [&form &env & decl] (cons 'loop* decl)))";
-	ast = parseClojure(p6, println);
+	ast = parseClojure("(def #{:qwe :asd :zxc})", println);
 	println(ast);
 
 	quit(0);
