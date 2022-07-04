@@ -1,0 +1,143 @@
+import sandbox/clojure/clojure_values;
+import sandbox/clojure/clojure_parser;
+import text/gringo/gringo_typed_action;
+
+export {
+
+	parseClojure(code : string, onError : (string) -> void) -> Clojure;
+}
+
+parseClojure(code : string, onError : (string) -> void) {
+	gringoTypedParse(code, clojureTypeAction(code, onError), parse_program, CString("Empty program"), onError);
+}
+
+clojureTypeAction(code : string, onError : (string) -> void) -> GringoAction<List<Clojure>> {
+	gringoTypedAction(
+		\s -> CString(s),
+		\e -> switch (e) {
+			CString(s): s;
+			default: {
+				onError("Expected string");
+				"";
+			}
+		},
+		\b -> CBoolean(b),
+		\i -> CInt(s2i(i)),
+		\d -> CDouble(s2d(d)),
+		\ -> CList([]),
+		\head, tail -> {
+			switch (tail : Clojure) {
+				CList(values): pushCList(tail, head)
+				default: tail;
+			}
+		},
+		GringoTypedOperators(
+			pairs2tree([
+				Pair("nil", \ -> CNil())
+			]),
+			pairs2tree([
+				Pair("symbol", \name -> {
+					CSymbol(getClojureString(name), "")
+				}),
+				Pair("clist", \l -> {
+					switch (l : Clojure) {
+						CList(values): l
+						default: CList([])
+					}
+				}),
+				Pair("vector", \l -> {
+					switch (l : Clojure) {
+						CList(values): CVector(values)
+						default: CVector([])
+					}
+				}),
+				Pair("map", \l -> {
+					switch (l : Clojure) {
+						CList(values): {
+							pairs = foldi(values, [], \i, acc, v -> {
+								if (i % 2 == 0) {
+									nvalue = elementAt(values, i + 1, CNil());
+									arrayPush(acc, Pair(v, nvalue))
+								} else {
+									acc
+								}
+							})
+							CMap(pairs)
+						}
+						default: CMap([])
+					}
+				}),
+				Pair("hex", \v -> {
+					value = switch (v : Clojure) {
+						CString(hex): parseHex(hex);
+						default: {
+							onError("Expected string");
+							0;
+						}
+					};
+					CInt(value)
+				}),
+				Pair("unescape", \v -> {
+					switch (v : Clojure) {
+						CString(t): CString(deserializeString(t).first);
+						default: v;
+					}
+				}),
+				Pair("keyword", \v -> {
+					switch (v : Clojure) {
+						CString(t): CKeyword(t, "")
+						default: {
+							onError("Expected string");
+							v;
+						}
+					}
+				}),
+				Pair("quote", \f -> {
+					CReaderMacro(CQuote(), f)
+				}),
+				Pair("deref", \f -> {
+					CReaderMacro(CDeref(), f)
+				}),
+				Pair("dispatch", \f -> {
+					CReaderMacro(CDispatch(), f)
+				}),
+				Pair("syntax_quote", \f -> {
+					CReaderMacro(CSyntaxQuote(), f)
+				}),
+				Pair("unquote", \f -> {
+					CReaderMacro(CUnquote(), f)
+				}),
+				Pair("unquote_splicing", \f -> {
+					CReaderMacro(CUnqoteSplicing(), f)
+				}),
+				Pair("char", \v -> {
+					switch (v : Clojure) {
+						CString(t): CChar(t)
+						default: v; 	// Not good
+					}
+				})
+			]),
+			pairs2tree([
+				Pair("ratio", \num, den -> {
+					CRatio(s2i(getClojureString(num)), s2i(getClojureString(den)))
+				})
+			]),
+			makeTree(),
+			makeTree(),
+			makeTree()
+		)
+  );
+}
+
+
+main() {
+	p1 = "(sym 123 [123, 56.55 dfdf \"aaa\" 0xad45] {:kw 123 :ww 54545})";
+	p2 = "(22/7 44/5 true false nil)";
+	p3 = "(asd, 'ert @aaa `qwe ~jjj ~@hkhkj)";
+	p4 = "(\\a \\r \\y)";
+	ast = parseClojure("(map #(+ % 5) [1 2 3])", println);
+	println(ast);
+
+	quit(0);
+}
+

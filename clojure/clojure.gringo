@@ -1,0 +1,71 @@
+form =
+	(
+		"true" $"true"
+		| "false" $"false"
+		| "nil" $"nil" 
+	)
+	|>	(
+		symbol $"symbol"
+		| keyword $"keyword"
+		| string $"unescape"
+		| backslash $anychar $"char"	// \newstring, \tab, etc? Let's try to avoid them. Unnatural to flow, maybe we can somehow get away with it.
+		| int "/" int $"ratio"
+		| "0x" $(hexdigit+) $"hex"	// Oct? 
+		| $('0'-'9'+ "." '0'-'9'*) $"s2d"
+		| $("." '0'-'9'+) $"s2d"
+		| int $"s2i"
+		| "[" ws forms "]" $"vector"
+		| "(" ws forms ")" $"clist"
+		| "{" ws forms "}" $"map"
+		| "'" form $"quote"
+		| "@" form $"deref"
+		| "#" form $"dispatch"
+		| "`" form $"syntax_quote"
+		| "~" form $"unquote"
+		| "~@" form $"unquote_splicing"
+	);
+
+forms = $"list" form $"cons" (cs+ form $"cons")* ws? 
+	| $"list";
+
+string = $('"' onechar_* '"');
+
+// Check if we need it
+onechar_ = backslash "u" hexdigit hexdigit hexdigit hexdigit
+	| backslash "X" hexdigit hexdigit hexdigit hexdigit
+	| backslash "x" hexdigit hexdigit
+	| backslash escapedchar_
+	| !'"' !backslash anychar;
+
+hexdigit = '0'-'9'
+	| 'a'-'f'
+	| 'A'-'F';
+
+escapedchar_ = backslash | '"' | "n" | "t" | "r";
+
+anychar = '0x0000'-'0xffff';
+
+// TODO: Add more symbols allowed by clojure
+keyword = $(":" ('a'-'z')*);
+
+symbol = $symbol_;
+
+// TODO: Add more symbols allowed by clojure
+symbol_ = nonnumeric (alphanumeric)*;
+
+alphanumeric = nonnumeric | '0'-'9';
+nonnumeric = 'a'-'z' | 'A'-'Z' | '_' | '*' | '+' | '!' | '-' | '_' | '?' | '<' | '>' | '=' | '%';
+
+int = $'0'-'9'+;
+
+backslash = '\';
+
+ws = cs*;
+
+cs = " " | "\t" | "\n" | "," | ";" (!"\n" anychar)* "\n";
+
+lastLineComment = ";" (!"\n" anychar)*;
+
+program = ws form lastLineComment?;	// TODO: multiple forms!
+
+program

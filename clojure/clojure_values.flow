@@ -1,0 +1,22 @@
+import sandbox/clojure/clojure;
+import runtime;
+
+export {
+
+	getClojureString(clj : Clojure) -> string;
+	getClojureInt(clj : Clojure) -> int;
+}
+
+getClojureString(clj : Clojure) -> string {
+	switch (clj : Clojure) {
+		CString(s): s
+		default: ""
+	}
+}
+
+getClojureInt(clj : Clojure) -> int {
+	switch (clj : Clojure) {
+		CInt(i): i
+		default: 0;
+	}
+}

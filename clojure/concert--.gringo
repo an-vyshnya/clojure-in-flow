@@ -1,0 +1,103 @@
+expsemi = 
+	exp (#";" ws expsemi $";" )* (";" ws)?
+	;
+
+exp =
+	"@" ws exp $"quote"
+	|> $$pos id "=" ws exp #";" ws expsemi $"let"
+	|> "formula" s id ":=" ws exp $"formula"
+	|> "formula" s id "=" ws exp $"formula"
+	|> $$pos id ":=" ws exp $":="
+	|> keyvalue	// Key value
+
+	|> exp $$pos "||" ws exp $"||"
+	|> exp $$pos "&&" ws exp $"&&"
+	|> exp $$pos "==" ws exp $"==" | exp $$pos "!=" ws exp $"!="
+	|> exp ($$pos "<=" ws exp $"<=" | $$pos "<" ws exp $"<" | $$pos ">=" ws exp $">=" | $$pos ">" ws exp $">")
+	|> exp < ($$pos "+" ws exp $"+" | $$pos "-" ws exp $"-")*
+	|> exp < ($$pos "*" ws exp $"*" | $$pos "/" ws exp $"/" | $$pos "%" ws exp $"%")*
+
+	|> (
+		$$pos '!' ws exp $"not"
+		| $$pos "-" ws exp $"negate"
+		| backslash ws lambdaargs "->" ws exp "" $"lambda" // The "" makes right-recursion disappear
+		| exp (
+			$$ pos "(" ws exps ")" ws $"call"
+			| $$ pos "." ws id $"dot"
+			| $$ pos "[" ws exp "]" ws $"index"
+		)*
+	)
+	|> (
+		$$pos "if" ws "(" ws exp ")" ws exp "else" ws exp $"ifelse" 
+		| $$pos "if" ws "(" ws exp ")" ws exp $"if"
+		| "(" ws exp ")" ws 
+		| "{" ws keyvalues "}" ws $"object"
+		| "{" ws expsemi "}" ws
+		| "true" ws $"true"
+		| "false" ws $"false"
+		| $$pos "$" ws exp $"unquote"
+		| $$pos id ws $"id"
+		| string ws $"unescape"
+		| "0x" $(hexdigit+) ws $"hex"
+		| $('0'-'9'+ "." '0'-'9'* exponent?) ws $"s2d"
+		| $('0'-'9'+ exponent) ws $"s2d"
+		| $("." '0'-'9'+) ws $"s2d"
+		| int ws $"s2i"
+		| "[" ws exps "]" ws
+	);
+
+exponent = "e" ("-" | "+")? '0'-'9'+;
+
+keyvalues = $"list" keyvalue_object  $"cons" ("," ws keyvalue $"cons")* ("," ws)? 
+	| $"list";
+
+keyvalue_object = keyvalue | '"' ws id '"' ws ":" ws exp $":";
+keyvalue = id ":" ws exp $":";
+
+exps = $"list" exp $"cons" ("," ws exp $"cons")* ("," ws)? 
+	| $"list";
+
+// listof(lambdaarg)
+lambdaargs = $"list" id ws $"cons" ("," ws id ws $"cons")* ("," ws)? 
+		| $"list";
+
+string = $('"' onechar_* '"') ws;
+
+onechar_ = backslash "u" hexdigit hexdigit hexdigit hexdigit
+	| backslash "X" hexdigit hexdigit hexdigit hexdigit
+	| backslash "x" hexdigit hexdigit
+	| backslash escapedchar_
+	| !'"' !backslash anychar;
+
+hexdigit = '0'-'9'
+	| 'a'-'f'
+	| 'A'-'F';
+
+escapedchar_ = backslash | '"' | "n" | "t" | "r";
+
+anychar = '0x0000'-'0xffff';
+
+id = $bid ws;
+
+bid = ('a'-'z' | 'A'-'Z' | '_') (letterOrDigit)*;
+
+letterOrDigit = 'a'-'z'
+	| 'A'-'Z'
+	| '_'
+	| '0'-'9';
+
+int = $'0'-'9'+;
+
+backslash = '\';
+
+ws = cs*;
+
+s = cs+;
+
+cs = " " | "\t" | "\n" | "//" (!"\n" anychar)* "\n" | "/*" (!"*/" anychar)* "*/";
+
+lastLineComment = "//" (!"\n" anychar)*;
+
+program = ws expsemi lastLineComment?;
+
+program

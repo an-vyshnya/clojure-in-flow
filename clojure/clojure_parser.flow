@@ -1,0 +1,738 @@
+// Produced by  flowcpp gringo/gringo.flow -- file=./sandbox/clojure/clojure.gringo compile=1
+import text/gringo/dcode_lib;
+import string;
+
+export {
+	parse_program(acc : DParseAcc<?>) -> bool;
+}
+
+
+parse_form(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		if ((if (matchString(acc, "true")) {
+			{
+				addVerbatim(acc, "true");
+				true
+			}
+		} else {
+			false
+		}) || ((if (matchString(acc, "false")) {
+			{
+				addVerbatim(acc, "false");
+				true
+			}
+		} else {
+			false
+		}) || ((if (matchString(acc, "nil")) {
+			{
+				addVerbatim(acc, "nil");
+				true
+			}
+		} else {
+			false
+		}) || parse_form1(acc)))) {
+			discardDCheckpoint(acc)
+		} else {
+			restoreDCheckpoint(acc)
+		}
+	}
+}
+
+parse_form1(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		pushDCheckpoint(acc);
+		if (if (parse_symbol(acc)) {
+			{
+				addVerbatim(acc, "symbol");
+				discardDCheckpoint(acc)
+			}
+		} else {
+			restoreDCheckpoint(acc)
+		}) {
+			discardDCheckpoint(acc)
+		} else {
+			{
+				pushDCheckpoint(acc);
+				if (if (parse_keyword(acc)) {
+					{
+						addVerbatim(acc, "keyword");
+						discardDCheckpoint(acc)
+					}
+				} else {
+					restoreDCheckpoint(acc)
+				}) {
+					discardDCheckpoint(acc)
+				} else {
+					{
+						pushDCheckpoint(acc);
+						if (if (parse_string(acc)) {
+							{
+								addVerbatim(acc, "unescape");
+								discardDCheckpoint(acc)
+							}
+						} else {
+							restoreDCheckpoint(acc)
+						}) {
+							discardDCheckpoint(acc)
+						} else {
+							{
+								pushDCheckpoint(acc);
+								if (if (parse_backslash(acc)) {
+									{
+										acc.starti ::= acc.i;
+										if (if (parse_anychar(acc)) {
+											addMatched(acc, substring(acc.input, acc.starti, acc.i - acc.starti))
+										} else {
+											false
+										}) {
+											{
+												addVerbatim(acc, "char");
+												discardDCheckpoint(acc)
+											}
+										} else {
+											restoreDCheckpoint(acc)
+										}
+									}
+								} else {
+									restoreDCheckpoint(acc)
+								}) {
+									discardDCheckpoint(acc)
+								} else {
+									{
+										pushDCheckpoint(acc);
+										if (if ((parse_int(acc) && ((matchString(acc, "/") && parse_int(acc))))) {
+											{
+												addVerbatim(acc, "ratio");
+												discardDCheckpoint(acc)
+											}
+										} else {
+											restoreDCheckpoint(acc)
+										}) {
+											discardDCheckpoint(acc)
+										} else {
+											{
+												pushDCheckpoint(acc);
+												if (if (matchString(acc, "0x")) {
+													{
+														acc.starti ::= acc.i;
+														pushDCheckpoint(acc);
+														if (if (if (parse_hexdigit(acc)) {
+															{
+																parseStar(acc, \ -> {
+																	parse_hexdigit(acc)
+																});
+																discardDCheckpoint(acc)
+															}
+														} else {
+															restoreDCheckpoint(acc)
+														}) {
+															addMatched(acc, substring(acc.input, acc.starti, acc.i - acc.starti))
+														} else {
+															false
+														}) {
+															{
+																addVerbatim(acc, "hex");
+																discardDCheckpoint(acc)
+															}
+														} else {
+															restoreDCheckpoint(acc)
+														}
+													}
+												} else {
+													restoreDCheckpoint(acc)
+												}) {
+													discardDCheckpoint(acc)
+												} else {
+													{
+														pushDCheckpoint(acc);
+														acc.starti ::= acc.i;
+														pushDCheckpoint(acc);
+														if (if (if (if (((if (matchRange(acc, 48, 57)) {
+															{
+																parseStar(acc, \ -> {
+																	matchRange(acc, 48, 57)
+																});
+																true
+															}
+														} else {
+															false
+														}) && matchString(acc, "."))) {
+															{
+																parseStar(acc, \ -> {
+																	matchRange(acc, 48, 57)
+																});
+																discardDCheckpoint(acc)
+															}
+														} else {
+															restoreDCheckpoint(acc)
+														}) {
+															addMatched(acc, substring(acc.input, acc.starti, acc.i - acc.starti))
+														} else {
+															false
+														}) {
+															{
+																addVerbatim(acc, "s2d");
+																discardDCheckpoint(acc)
+															}
+														} else {
+															restoreDCheckpoint(acc)
+														}) {
+															discardDCheckpoint(acc)
+														} else {
+															{
+																pushDCheckpoint(acc);
+																acc.starti ::= acc.i;
+																pushDCheckpoint(acc);
+																if (if (if (if ((matchString(acc, ".") && (if (matchRange(acc, 48, 57)) {
+																	{
+																		parseStar(acc, \ -> {
+																			matchRange(acc, 48, 57)
+																		});
+																		true
+																	}
+																} else {
+																	false
+																}))) {
+																	discardDCheckpoint(acc)
+																} else {
+																	restoreDCheckpoint(acc)
+																}) {
+																	addMatched(acc, substring(acc.input, acc.starti, acc.i - acc.starti))
+																} else {
+																	false
+																}) {
+																	{
+																		addVerbatim(acc, "s2d");
+																		discardDCheckpoint(acc)
+																	}
+																} else {
+																	restoreDCheckpoint(acc)
+																}) {
+																	discardDCheckpoint(acc)
+																} else {
+																	{
+																		pushDCheckpoint(acc);
+																		if (if (parse_int(acc)) {
+																			{
+																				addVerbatim(acc, "s2i");
+																				discardDCheckpoint(acc)
+																			}
+																		} else {
+																			restoreDCheckpoint(acc)
+																		}) {
+																			discardDCheckpoint(acc)
+																		} else {
+																			{
+																				pushDCheckpoint(acc);
+																				if (if ((matchString(acc, "[") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, "]"))))))) {
+																					{
+																						addVerbatim(acc, "vector");
+																						discardDCheckpoint(acc)
+																					}
+																				} else {
+																					restoreDCheckpoint(acc)
+																				}) {
+																					discardDCheckpoint(acc)
+																				} else {
+																					{
+																						pushDCheckpoint(acc);
+																						if (if ((matchString(acc, "(") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, ")"))))))) {
+																							{
+																								addVerbatim(acc, "clist");
+																								discardDCheckpoint(acc)
+																							}
+																						} else {
+																							restoreDCheckpoint(acc)
+																						}) {
+																							discardDCheckpoint(acc)
+																						} else {
+																							{
+																								pushDCheckpoint(acc);
+																								if (if ((matchString(acc, "{") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, "}"))))))) {
+																									{
+																										addVerbatim(acc, "map");
+																										discardDCheckpoint(acc)
+																									}
+																								} else {
+																									restoreDCheckpoint(acc)
+																								}) {
+																									discardDCheckpoint(acc)
+																								} else {
+																									{
+																										pushDCheckpoint(acc);
+																										if (if ((matchString(acc, "'") && parse_form(acc))) {
+																											{
+																												addVerbatim(acc, "quote");
+																												discardDCheckpoint(acc)
+																											}
+																										} else {
+																											restoreDCheckpoint(acc)
+																										}) {
+																											discardDCheckpoint(acc)
+																										} else {
+																											{
+																												pushDCheckpoint(acc);
+																												if (if ((matchString(acc, "@") && parse_form(acc))) {
+																													{
+																														addVerbatim(acc, "deref");
+																														discardDCheckpoint(acc)
+																													}
+																												} else {
+																													restoreDCheckpoint(acc)
+																												}) {
+																													discardDCheckpoint(acc)
+																												} else {
+																													{
+																														pushDCheckpoint(acc);
+																														if (if ((matchString(acc, "#") && parse_form(acc))) {
+																															{
+																																addVerbatim(acc, "dispatch");
+																																discardDCheckpoint(acc)
+																															}
+																														} else {
+																															restoreDCheckpoint(acc)
+																														}) {
+																															discardDCheckpoint(acc)
+																														} else {
+																															{
+																																pushDCheckpoint(acc);
+																																if (if ((matchString(acc, "`") && parse_form(acc))) {
+																																	{
+																																		addVerbatim(acc, "syntax_quote");
+																																		discardDCheckpoint(acc)
+																																	}
+																																} else {
+																																	restoreDCheckpoint(acc)
+																																}) {
+																																	discardDCheckpoint(acc)
+																																} else {
+																																	{
+																																		pushDCheckpoint(acc);
+																																		if (if ((matchString(acc, "~") && parse_form(acc))) {
+																																			{
+																																				addVerbatim(acc, "unquote");
+																																				discardDCheckpoint(acc)
+																																			}
+																																		} else {
+																																			restoreDCheckpoint(acc)
+																																		}) {
+																																			discardDCheckpoint(acc)
+																																		} else {
+																																			{
+																																				pushDCheckpoint(acc);
+																																				if (if ((matchString(acc, "~@") && parse_form(acc))) {
+																																					{
+																																						addVerbatim(acc, "unquote_splicing");
+																																						discardDCheckpoint(acc)
+																																					}
+																																				} else {
+																																					restoreDCheckpoint(acc)
+																																				}) {
+																																					discardDCheckpoint(acc)
+																																				} else {
+																																					restoreDCheckpoint(acc)
+																																				}
+																																			}
+																																		}
+																																	}
+																																}
+																															}
+																														}
+																													}
+																												}
+																											}
+																										}
+																									}
+																								}
+																							}
+																						}
+																					}
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+parse_forms(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		addVerbatim(acc, "list");
+		pushDCheckpoint(acc);
+		pushDCheckpoint(acc);
+		if (if (parse_form(acc)) {
+			{
+				addVerbatim(acc, "cons");
+				parseStar(acc, \ -> {
+					{
+						pushDCheckpoint(acc);
+						pushDCheckpoint(acc);
+						if (((if (parse_cs(acc)) {
+							{
+								parseStar(acc, \ -> {
+									parse_cs(acc)
+								});
+								discardDCheckpoint(acc)
+							}
+						} else {
+							restoreDCheckpoint(acc)
+						}) && parse_form(acc))) {
+							{
+								addVerbatim(acc, "cons");
+								discardDCheckpoint(acc)
+							}
+						} else {
+							restoreDCheckpoint(acc)
+						}
+					}
+				});
+				pushDCheckpoint(acc);
+				if (parse_ws(acc)) {
+					discardDCheckpoint(acc)
+				} else {
+					restoreDCheckpoint(acc)
+				};
+				discardDCheckpoint(acc)
+			}
+		} else {
+			restoreDCheckpoint(acc)
+		}) {
+			discardDCheckpoint(acc)
+		} else {
+			restoreDCheckpoint(acc)
+		};
+		discardDCheckpoint(acc)
+	}
+}
+
+parse_string(acc : DParseAcc<?>) -> bool {
+	{
+		acc.starti ::= acc.i;
+		pushDCheckpoint(acc);
+		if (if (matchString(acc, "\"")) {
+			{
+				parseStar(acc, \ -> {
+					parse_onechar_(acc)
+				});
+				if (matchString(acc, "\"")) {
+					discardDCheckpoint(acc)
+				} else {
+					restoreDCheckpoint(acc)
+				}
+			}
+		} else {
+			restoreDCheckpoint(acc)
+		}) {
+			addMatched(acc, substring(acc.input, acc.starti, acc.i - acc.starti))
+		} else {
+			false
+		}
+	}
+}
+
+parse_onechar_(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		pushDCheckpoint(acc);
+		if (if (parse_backslash(acc)) {
+			{
+				pushDCheckpoint(acc);
+				pushDCheckpoint(acc);
+				if (if (if ((matchString(acc, "u") && ((parse_hexdigit(acc) && ((parse_hexdigit(acc) && ((parse_hexdigit(acc) && parse_hexdigit(acc))))))))) {
+					discardDCheckpoint(acc)
+				} else {
+					restoreDCheckpoint(acc)
+				}) {
+					discardDCheckpoint(acc)
+				} else {
+					{
+						pushDCheckpoint(acc);
+						if (if ((matchString(acc, "X") && ((parse_hexdigit(acc) && ((parse_hexdigit(acc) && ((parse_hexdigit(acc) && parse_hexdigit(acc))))))))) {
+							discardDCheckpoint(acc)
+						} else {
+							restoreDCheckpoint(acc)
+						}) {
+							discardDCheckpoint(acc)
+						} else {
+							{
+								pushDCheckpoint(acc);
+								if ((if ((matchString(acc, "x") && ((parse_hexdigit(acc) && parse_hexdigit(acc))))) {
+									discardDCheckpoint(acc)
+								} else {
+									restoreDCheckpoint(acc)
+								}) || parse_escapedchar_(acc)) {
+									discardDCheckpoint(acc)
+								} else {
+									restoreDCheckpoint(acc)
+								}
+							}
+						}
+					}
+				}) {
+					discardDCheckpoint(acc)
+				} else {
+					restoreDCheckpoint(acc)
+				}
+			}
+		} else {
+			restoreDCheckpoint(acc)
+		}) {
+			discardDCheckpoint(acc)
+		} else {
+			{
+				pushDCheckpoint(acc);
+				pushDCheckpoint(acc);
+				if (if (if (matchString(acc, "\"")) {
+					restoreDCheckpoint(acc)
+				} else {
+					{
+						restoreDCheckpoint(acc);
+						true
+					}
+				}) {
+					{
+						pushDCheckpoint(acc);
+						if (((if (parse_backslash(acc)) {
+							restoreDCheckpoint(acc)
+						} else {
+							{
+								restoreDCheckpoint(acc);
+								true
+							}
+						}) && parse_anychar(acc))) {
+							discardDCheckpoint(acc)
+						} else {
+							restoreDCheckpoint(acc)
+						}
+					}
+				} else {
+					restoreDCheckpoint(acc)
+				}) {
+					discardDCheckpoint(acc)
+				} else {
+					restoreDCheckpoint(acc)
+				}
+			}
+		}
+	}
+}
+
+parse_hexdigit(acc : DParseAcc<?>) -> bool {
+	matchRange(acc, 48, 57) || (matchRange(acc, 97, 102) || matchRange(acc, 65, 70))
+}
+
+parse_escapedchar_(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		if (parse_backslash(acc) || (matchString(acc, "\"") || (matchString(acc, "n") || (matchString(acc, "t") || matchString(acc, "r"))))) {
+			discardDCheckpoint(acc)
+		} else {
+			restoreDCheckpoint(acc)
+		}
+	}
+}
+
+parse_anychar(acc : DParseAcc<?>) -> bool {
+	matchRange(acc, 0, 65535)
+}
+
+parse_keyword(acc : DParseAcc<?>) -> bool {
+	{
+		acc.starti ::= acc.i;
+		if (if (matchString(acc, ":")) {
+			{
+				parseStar(acc, \ -> {
+					matchRange(acc, 97, 122)
+				});
+				true
+			}
+		} else {
+			false
+		}) {
+			addMatched(acc, substring(acc.input, acc.starti, acc.i - acc.starti))
+		} else {
+			false
+		}
+	}
+}
+
+parse_symbol(acc : DParseAcc<?>) -> bool {
+	{
+		acc.starti ::= acc.i;
+		if (parse_symbol_(acc)) {
+			addMatched(acc, substring(acc.input, acc.starti, acc.i - acc.starti))
+		} else {
+			false
+		}
+	}
+}
+
+parse_symbol_(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		if (parse_nonnumeric(acc)) {
+			{
+				parseStar(acc, \ -> {
+					parse_alphanumeric(acc)
+				});
+				discardDCheckpoint(acc)
+			}
+		} else {
+			restoreDCheckpoint(acc)
+		}
+	}
+}
+
+parse_alphanumeric(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		if (parse_nonnumeric(acc) || matchRange(acc, 48, 57)) {
+			discardDCheckpoint(acc)
+		} else {
+			restoreDCheckpoint(acc)
+		}
+	}
+}
+
+parse_nonnumeric(acc : DParseAcc<?>) -> bool {
+	matchRange(acc, 97, 122) || (matchRange(acc, 65, 90) || (matchString(acc, "_") || (matchString(acc, "*") || (matchString(acc, "+") || (matchString(acc, "!") || (matchString(acc, "-") || (matchString(acc, "_") || (matchString(acc, "?") || (matchString(acc, "<") || (matchString(acc, ">") || (matchString(acc, "=") || matchString(acc, "%"))))))))))))
+}
+
+parse_int(acc : DParseAcc<?>) -> bool {
+	{
+		acc.starti ::= acc.i;
+		if (if (matchRange(acc, 48, 57)) {
+			{
+				parseStar(acc, \ -> {
+					matchRange(acc, 48, 57)
+				});
+				true
+			}
+		} else {
+			false
+		}) {
+			addMatched(acc, substring(acc.input, acc.starti, acc.i - acc.starti))
+		} else {
+			false
+		}
+	}
+}
+
+parse_backslash(acc : DParseAcc<?>) -> bool {
+	matchString(acc, "\\")
+}
+
+parse_ws(acc : DParseAcc<?>) -> bool {
+	parseStar(acc, \ -> {
+		parse_cs(acc)
+	})
+}
+
+parse_cs(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		if (matchString(acc, " ") || (matchString(acc, "\t") || (matchString(acc, "\n") || matchString(acc, ",")))) {
+			discardDCheckpoint(acc)
+		} else {
+			{
+				pushDCheckpoint(acc);
+				if (if ((parse_lastLineComment(acc) && matchString(acc, "\n"))) {
+					discardDCheckpoint(acc)
+				} else {
+					restoreDCheckpoint(acc)
+				}) {
+					discardDCheckpoint(acc)
+				} else {
+					restoreDCheckpoint(acc)
+				}
+			}
+		}
+	}
+}
+
+parse_lastLineComment(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		if (matchString(acc, ";")) {
+			{
+				parseStar(acc, \ -> {
+					{
+						pushDCheckpoint(acc);
+						pushDCheckpoint(acc);
+						if (((if (matchString(acc, "\n")) {
+							restoreDCheckpoint(acc)
+						} else {
+							{
+								restoreDCheckpoint(acc);
+								true
+							}
+						}) && parse_anychar(acc))) {
+							discardDCheckpoint(acc)
+						} else {
+							restoreDCheckpoint(acc)
+						}
+					}
+				});
+				discardDCheckpoint(acc)
+			}
+		} else {
+			restoreDCheckpoint(acc)
+		}
+	}
+}
+
+parse_program(acc : DParseAcc<?>) -> bool {
+	{
+		pushDCheckpoint(acc);
+		if ((parse_ws(acc) && parse_form(acc))) {
+			{
+				pushDCheckpoint(acc);
+				if (parse_lastLineComment(acc)) {
+					discardDCheckpoint(acc)
+				} else {
+					restoreDCheckpoint(acc)
+				};
+				discardDCheckpoint(acc)
+			}
+		} else {
+			restoreDCheckpoint(acc)
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

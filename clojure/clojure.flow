@@ -1,0 +1,43 @@
+import ds/array;
+
+export {
+	Clojure ::= CSymbol, CLiteral, CList, CVector, CMap, CSet, CReaderMacro;
+
+	CSymbol(name : string, namespace : string);	// class qualification?
+
+	CLiteral ::= CString, CNumber, CChar, CBoolean, CKeyword, CNil;
+		CString(value : string);
+		CNumber ::= CInt, CDouble, CRatio; // Long versions? Inf, NaN?
+			CInt(value : int);
+			CDouble(value : double);
+			CRatio(numerator : int, denominator : int);
+		CChar(value : string); // Let's try to avoid them. Unnatural to flow, maybe we can somehow get away with it.
+		CBoolean(value : bool);
+		CKeyword(value : string, namespace : string);
+		CNil();
+
+	// TODO : Use appropriate data structures 
+	CList(values : [Clojure]);	
+
+	CVector(values : [Clojure]);
+
+	CMap(values : [Pair<Clojure, Clojure>]);
+
+	CSet(values : [Clojure]);
+
+	CReaderMacro(macro : CReaderMacroType, value : Clojure);
+	CReaderMacroType ::= CQuote, CDeref, /* CMetadata, */ CDispatch, CSyntaxQuote, CUnquote, CUnqoteSplicing;
+		CQuote(); 
+		CDeref(); 
+		// CMetadata(); // Do we need it? 
+		CDispatch(); 
+		CSyntaxQuote(); 
+		CUnquote(); 
+		CUnqoteSplicing();
+
+	pushCList(list : CList, value : Clojure) -> CList;
+}
+
+pushCList(list : CList, value : Clojure) -> CList {
+	CList(arrayPush(list.values, value))
+}
