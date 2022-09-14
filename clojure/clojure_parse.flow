@@ -165,7 +165,8 @@ main() {
 		^{:macro true
 		:added \"1.0\"}
 		loop (fn* loop [&form &env & decl] (cons 'loop* decl)))";
-	ast = parseClojure("(def #{:qwe :asd :zxc})", println);
+	p7 = "(def #{:qwe :asd :zxc})";
+	ast = parseClojure(p6, println);
 	println(ast);
 
 	quit(0);

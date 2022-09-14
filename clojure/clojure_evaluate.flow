@@ -1,0 +1,10 @@
+export {
+
+	evaluteClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv;
+}
+
+evaluteClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv {
+	switch (form : Clojure) {
+		
+	}
+}

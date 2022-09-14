@@ -1,7 +1,7 @@
 import ds/array;
 
 export {
-	Clojure ::= CSymbol, CLiteral, CList, CVector, CMap, CSet, CReaderMacro;
+	Clojure ::= CSymbol, CLiteral, CList, CVector, CMap, CSet, CMeta, CReaderMacro;
 
 	CSymbol(name : string, namespace : string);	// class qualification?
 
@@ -25,6 +25,8 @@ export {
 
 	CSet(values : [Clojure]);
 
+	CMeta(meta : CMap, value : Clojure);
+
 	CReaderMacro(macro : CReaderMacroType, value : Clojure);
 	CReaderMacroType ::= CQuote, CDeref, CMetadata, CDispatch, CSyntaxQuote, CUnquote, CUnqoteSplicing;
 		CQuote(); 
@@ -37,6 +39,7 @@ export {
 
 	pushCList(list : CList, value : Clojure) -> CList;
 	consCList(list : CList, value : Clojure) -> CList;
+	mapCList(list : CList, fn : (Clojure) -> Clojure) -> CList;
 }
 
 pushCList(list : CList, value : Clojure) -> CList {
@@ -45,4 +48,10 @@ pushCList(list : CList, value : Clojure) -> CList {
 
 consCList(list : CList, value : Clojure) -> CList {
 	CList(concat([value], list.values))
+}
+
+mapCList(list : CList, fn : (Clojure) -> Clojure) -> CList {
+	CList(
+		map(list.values, fn)
+	)
 }

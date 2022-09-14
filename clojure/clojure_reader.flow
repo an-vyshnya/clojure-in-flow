@@ -1,0 +1,24 @@
+export {
+
+	readClojure(clj : Clojure) -> Clojure;
+}
+
+readClojure(clj : Clojure) -> Clojure {
+	switch (clj : Clojure) {
+		CLiteral(): clj;
+		CSymbol(__, __): clj; // qualification?
+		CList(values): mapCList(clj, readClojure)
+		CVector(values): CVector(map(values, readClojure))	// special fn!
+		CMap(values): CMap(map(values, unpairC(\key, value -> Pair(readClojure(key), readClojure(value)))))
+		CSet(values): CSet(map(values, readClojure))
+		CReaderMacro(type, value): switch (type : CReaderMacroType) {
+			CQuote(): CList([CSymbol("quote", ""), value])
+			CDeref(): CList([CSymbol("deref", ""), value])
+			CMetadata(meta): CMeta(meta, value)
+			CDispatch(); 
+			CSyntaxQuote(): value // TODO: gensyms!
+			CUnquote()
+			CUnqoteSplicing();
+		}
+	}
+}

@@ -1,0 +1,9 @@
+export {
+	ClojureEnv(
+		// Actually, it could be ref
+		// Also, maybe we'll need namespaces here
+		variables : DynamicBehvaiour<Tree<string, DynamicBehvaiour<Clojure>>>,
+		// Locals
+		bindings : Tree<string, Clojure>
+	);	
+}
