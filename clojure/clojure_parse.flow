@@ -148,27 +148,27 @@ clojureTypeAction(code : string, onError : (string) -> void) -> GringoAction<Lis
 }
 
 
-main() {
-	p1 = "(sym 123 [123, 56.55 dfdf \"aaa\" 0xad45] {:kw 123 :ww 54545})";
-	p2 = "(22/7 44/5 true false nil)";
-	p3 = "(asd, 'ert @aaa `qwe ~jjj ~@hkhkj)";
-	p4 = "(\\a \\r \\y)";
-	p5 = "(map #(+ % 5) [1 2 3])";
-	p6 = "
-	(def
-		^{:macro true
-			:added \"1.0\"}
-		let (fn* let [&form &env & decl] (cons 'let* decl)))
+// main() {
+// 	p1 = "(sym 123 [123, 56.55 dfdf \"aaa\" 0xad45] {:kw 123 :ww 54545})";
+// 	p2 = "(22/7 44/5 true false nil)";
+// 	p3 = "(asd, 'ert @aaa `qwe ~jjj ~@hkhkj)";
+// 	p4 = "(\\a \\r \\y)";
+// 	p5 = "(map #(+ % 5) [1 2 3])";
+// 	p6 = "
+// 	(def
+// 		^{:macro true
+// 			:added \"1.0\"}
+// 		let (fn* let [&form &env & decl] (cons 'let* decl)))
 		
 		
-	(def
-		^{:macro true
-		:added \"1.0\"}
-		loop (fn* loop [&form &env & decl] (cons 'loop* decl)))";
-	p7 = "(def #{:qwe :asd :zxc})";
-	ast = parseClojure(p6, println);
-	println(ast);
+// 	(def
+// 		^{:macro true
+// 		:added \"1.0\"}
+// 		loop (fn* loop [&form &env & decl] (cons 'loop* decl)))";
+// 	p7 = "(def #{:qwe :asd :zxc})";
+// 	ast = parseClojure(p6, println);
+// 	println(ast);
 
-	quit(0);
-}
+// 	quit(0);
+// }
 

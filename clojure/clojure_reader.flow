@@ -1,11 +1,18 @@
-export {
+// export {
 
-	readClojure(clj : Clojure) -> Clojure;
-}
+// 	readClojure(clj : Clojure) -> Clojure;
+// }
+import sandbox/clojure/clojure_parse;
+import ds/arrayutils;
+
+// readerDispatcherTable = pairs2tree([
+
+// ])
 
 readClojure(clj : Clojure) -> Clojure {
 	switch (clj : Clojure) {
 		CLiteral(): clj;
+		CMeta(meta, value): clj;
 		CSymbol(__, __): clj; // qualification?
 		CList(values): mapCList(clj, readClojure)
 		CVector(values): CVector(map(values, readClojure))	// special fn!
@@ -15,10 +22,58 @@ readClojure(clj : Clojure) -> Clojure {
 			CQuote(): CList([CSymbol("quote", ""), value])
 			CDeref(): CList([CSymbol("deref", ""), value])
 			CMetadata(meta): CMeta(meta, value)
-			CDispatch(); 
+			CDispatch(): switch (value : Clojure) {
+				CList(values): {
+					getArg = \v -> switch (v : Clojure) {
+						CSymbol(name, __): if (startsWith(name, "%")) Some(takeAfter(name, "%", "")) else None()
+						default: None()
+					};
+					isRestPresent = contains(values, CSymbol("%&", ""));
+					nargs = countA(values, \v -> isSome(getArg(v))) - (if (isRestPresent) 1 else 0);
+					
+					// TODO: these should be gensyms.
+					args = concat(
+						map(enumFromTo(0, nargs - 1), \i -> CSymbol("arg" + i2s(i), "")),
+						if (isRestPresent) [CSymbol("&", ""), CSymbol("rest", "")] else []
+					);
+					CList(
+						concat(
+							[
+								CSymbol("fn", ""),
+								CVector(args)	
+							],
+							map(values, \v -> {
+								eitherMap(
+									getArg(v),
+									\arg0 -> {
+										arg = if (arg0 == "") "1" else arg0;
+										if (isDigits(arg)) {
+											elementAt(args, s2i(arg) - 1, CNil()) // Nil shoudn't happen
+										} else if (arg == "&") {
+											CSymbol("rest", "")
+										} else {
+											CNil()
+										}
+									},
+									v
+								)
+							})
+						)
+					)
+				}
+				default: clj
+			}
 			CSyntaxQuote(): value // TODO: gensyms!
-			CUnquote()
-			CUnqoteSplicing();
+			CUnquote(): clj
+			CUnqoteSplicing(): clj
 		}
 	}
+}
+
+main() {
+	dispatcherTest = "(map #(+ % %2 5 %&) [1 2 3])";
+
+	parsed = parseClojure(dispatcherTest, println);
+	read = readClojure(parsed);
+	println(read);
 }
