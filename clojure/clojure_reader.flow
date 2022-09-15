@@ -1,13 +1,10 @@
-// export {
-
-// 	readClojure(clj : Clojure) -> Clojure;
-// }
 import sandbox/clojure/clojure_parse;
 import ds/arrayutils;
 
-// readerDispatcherTable = pairs2tree([
+export {
 
-// ])
+	readClojure(clj : Clojure) -> Clojure;
+}
 
 readClojure(clj : Clojure) -> Clojure {
 	switch (clj : Clojure) {
@@ -23,6 +20,7 @@ readClojure(clj : Clojure) -> Clojure {
 			CDeref(): CList([CSymbol("deref", ""), value])
 			CMetadata(meta): CMeta(meta, value)
 			CDispatch(): switch (value : Clojure) {
+				// Sets are processed in parser
 				CList(values): {
 					getArg = \v -> switch (v : Clojure) {
 						CSymbol(name, __): if (startsWith(name, "%")) Some(takeAfter(name, "%", "")) else None()
@@ -70,10 +68,10 @@ readClojure(clj : Clojure) -> Clojure {
 	}
 }
 
-main() {
-	dispatcherTest = "(map #(+ % %2 5 %&) [1 2 3])";
+// main() {
+// 	dispatcherTest1 = "(map #(+ % %2 5 %&) [1 2 3])";
 
-	parsed = parseClojure(dispatcherTest, println);
-	read = readClojure(parsed);
-	println(read);
-}
+// 	parsed = parseClojure(dispatcherTest2, println);
+// 	read = readClojure(parsed);
+// 	println(read);
+// }

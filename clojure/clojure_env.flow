@@ -1,9 +1,15 @@
+import behaviour;
+import sandbox/clojure/clojure;
+
 export {
 	ClojureEnv(
 		// Actually, it could be ref
-		// Also, maybe we'll need namespaces here
-		variables : DynamicBehvaiour<Tree<string, DynamicBehvaiour<Clojure>>>,
+		vars : DynamicBehaviour<Tree<string, DynamicBehaviour<Clojure>>>,
 		// Locals
-		bindings : Tree<string, Clojure>
+		bindings : Tree<string, Clojure>,
+		// Current value
+		value : Clojure,
+
+		onError : (string) -> void
 	);	
 }

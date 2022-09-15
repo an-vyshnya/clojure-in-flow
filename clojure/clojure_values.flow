@@ -6,6 +6,8 @@ export {
 	getClojureString(clj : Clojure) -> string;
 	getClojureInt(clj : Clojure) -> int;
 	getClojureList(clj : Clojure) -> CList;
+	getClojureSymbolName(clj : Clojure) -> string;
+	getClojureBool(clj : Clojure) -> bool;
 }
 
 getClojureString(clj : Clojure) -> string {
@@ -26,5 +28,20 @@ getClojureList(clj : Clojure) -> CList {
 	switch (clj : Clojure) {
 		CList(l): clj
 		default: CList([])
+	}
+}
+
+getClojureSymbolName(clj : Clojure) -> string {
+	switch (clj : Clojure) {
+		CSymbol(name, __): name
+		default: ""
+	}
+}
+
+getClojureBool(clj : Clojure) -> bool {
+	switch (clj : Clojure) {
+		CBoolean(v): v
+		CNil(): false
+		default: true
 	}
 }

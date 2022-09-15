@@ -1,10 +1,240 @@
-export {
+// export {
 
-	evaluteClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv;
+// 	evaluateClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv;
+// }
+
+import loop;
+import sandbox/clojure/clojure_reader;
+import sandbox/clojure/clojure_env;
+
+// Clojure loves paired arrays
+// splitInPairs(arr : [?], def : ?) -> [Pair<?, ?>] {
+// 	map(splitByNumber(arr, 2), \chunk -> if (length(chunk) < 2) [chunk[0], def] else chunk)
+// } 
+
+wrapInDo(exprs : [Clojure]) -> Clojure {
+	CList(concat(
+		[CSymbol("do", "")],
+		exprs
+	))
 }
 
-evaluteClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv {
-	switch (form : Clojure) {
+isSpecialForm(name : Clojure) -> bool {
+	contains(["def", "if", "fn", "do"], getClojureSymbolName(name))
+}
+
+evaluateSpecialForm(env : ClojureEnv, specialForm : Clojure, args : [Clojure]) -> ClojureEnv {
+	nth = \i -> elementAt(args, i, CNil());
+	name = getClojureSymbolName(specialForm);
+	
+	if (name == "def") {
+		setVar(env, name, nth(0))
+	} else if (name == "if") {
+		cond = evaluateClojure(env, nth(0));
+		if (getClojureBool(cond.value)) { 
+			evaluateClojure(cond, nth(1))
+		} else {
+			evaluateClojure(cond, nth(2))
+		}
+	} else if (name == "do") {
+		if (args == []) {
+			ClojureEnv(env with value = CNil())
+		} else {
+			unpair(
+				evaluateManyClojure(env, args),
+				\ienv, results -> ClojureEnv(ienv with value = lastElement(results, CNil()))
+			)
+		}
+	} else if (name == "fn") {
+		ClojureEnv(env with value = CList(concat([specialForm], args)))
+		// extractParams : (Clojure) -> [string] = \expr -> {
+		// 	switch (expr : Clojure) {
+		// 		CVector(values): map(values, \v -> switch (v : Clojure) {
+		// 			CSymbol(paramName, __): paramName
+		// 			default: getClojureString(v) // Questionable!
+		// 		})
+		// 		default: []
+		// 	};
+			
+		// }
+		// // exprs => [] expr | ([] expr) ([,,] expr) ...
+		// getBodies = \exprs -> {
+		// 	foldiUntil2(exprs, [], \i, acc, expr -> {
+		// 		switch (expr : Clojure) {
+		// 			CList(values): Pair(
+		// 				false,
+		// 				arrayPush(acc, Pair(extractParams(firstElement(values, CNil())), wrapInDo(tail(values))))
+		// 			)
+		// 			default: Pair(
+		// 				true,
+		// 				[Pair(extractParams(expr), wrapInDo(tail(exprs)))]
+		// 			)
+		// 		}
+		// 	})
+		// }
+		// switch (nth(0) : Clojure) {
+		// 	CSymbol(sname, __): ClojureFunction(Some(sname), getBodies(tail(args)))
+		// 	default: ClojureFunction(None(), getBodies(args))
+		// }
+	} else {
+		env;
+	}
+}
+
+setLocalBindings(env : ClojureEnv, names : [string], values : [Clojure]) -> ClojureEnv {
+	ClojureEnv(env with bindings = setTreeValues(
+		env.bindings,
+		zipWith(names, values, \n, v -> Pair(n, v))
+	))
+}
+
+setVar(env : ClojureEnv, name : string, value : Clojure) -> ClojureEnv {
+	eitherFn(
+		lookupTree(getValue(env.vars), name),
+		\valueB -> next(valueB, value),
+		\ -> {
+			// Throw error
+
+		}
+	);
+	env;
+}
+
+castToClojureFunction(input : Clojure) -> ClojureFunction {
+	extractParams : (Clojure) -> [string] = \expr -> {
+		switch (expr : Clojure) {
+			CVector(values): map(values, \v -> switch (v : Clojure) {
+				CSymbol(paramName, __): paramName
+				default: getClojureString(v) // Questionable!
+			})
+			default: []
+		};
 		
 	}
+	// exprs => [] expr | ([] expr) ([,,] expr) ...
+	getBodies = \exprs -> {
+		foldiUntil2(exprs, [], \i, acc, expr -> {
+			switch (expr : Clojure) {
+				CList(values): Pair(
+					false,
+					arrayPush(acc, Pair(extractParams(firstElement(values, CNil())), wrapInDo(tail(values))))
+				)
+				default: Pair(
+					true,
+					[Pair(extractParams(expr), wrapInDo(tail(exprs)))]
+				)
+			}
+		})
+	}
+
+	switch (input : Clojure) {
+		CList(values): {
+			name = getClojureSymbolName(firstElement(values, CNil()));
+			if (name == "fn") {
+				args = tail(values);
+				switch (firstElement(args, CNil()) : Clojure) {
+					CSymbol(sname, __): ClojureFunction(Some(sname), getBodies(tail(args)))
+					default: ClojureFunction(None(), getBodies(args))
+				}
+			} else {
+				nopClojureFinction
+			}
+		}
+		default: nopClojureFinction
+	}
+}
+
+invokeClojure(env : ClojureEnv, fn : ClojureFunction, args : [Clojure]) -> ClojureEnv {
+	n = length(args);
+	// TODO: variadic arity?
+	arityM = find(fn.arity, \b -> length(b.first) == n);
+	eitherFn(
+		arityM,
+		unpairC(\params, body -> {
+			nenv = setLocalBindings(env, params, args);
+			resEnv = evaluateClojure(nenv, body);
+			ClojureEnv(resEnv with bindings = env.bindings); //this should be fine, shouldn't it?
+		}),
+		\ -> {
+			// Throw error!
+			env;
+		}
+	)
+}
+
+evaluateManyClojure(env : ClojureEnv, forms : [Clojure]) -> Pair<ClojureEnv, [Clojure]> {
+	fold(forms, Pair(env, []), \p, form -> unpair(p, \ienv, acc -> {
+		nenv = evaluateClojure(ienv, form);
+		Pair(nenv, arrayPush(acc, nenv.value))
+	}));
+}
+
+evaluateClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv {
+	switch (form : Clojure) {
+		CLiteral(): ClojureEnv(env with value = form);
+		CVector(values): {
+			unpair(
+				evaluateManyClojure(env, values),
+				\nenv, results -> ClojureEnv(nenv with value = CVector(results))
+			)
+		}
+		// CMap
+		// CSet
+		CList(values): {
+			if (values == []) {
+				ClojureEnv(env with value = CList([]))
+			} else {
+				fn = values[0]; // we have it for sure
+				if (isSpecialForm(fn)) {
+					evaluateSpecialForm(env, fn, tail(values))
+				} else {
+					efn = evaluateClojure(env, fn);
+					// eargs = fold(tail(values), Pair(efn, []), \p, arg -> unpair(p, \ienv, acc -> {
+					// 	earg = evaluateClojure(ienv, arg);
+					// 	Pair(earg, arrayPush(acc, earg.value))
+					// }));
+					eargs = evaluateManyClojure(efn, tail(values));
+					invokeClojure(eargs.first, castToClojureFunction(efn.value), eargs.second)
+				}
+			}
+		}
+		// TODO: qualification?
+		CSymbol(name, __): {
+			res = eitherFn(
+				lookupTree(env.bindings, name),
+				idfn,
+				\ -> eitherFn(
+					lookupTree(getValue(env.vars), name),
+					\value -> getValue(value),
+					\ -> {
+						env.onError("Symbol " + name + " can't be resolved!");
+						CNil()
+					}
+				)
+			);
+			ClojureEnv(env with value = res)
+		}
+		default: ClojureEnv(env with value = form)
+	}
+}
+
+main() {
+	example = "(if false 1 2)";
+	example2 = "((fn [a b c] (if a b c)) true 4 5)";
+
+	env = ClojureEnv(
+		make(makeTree()),
+		makeTree(),
+		CNil(),
+		println
+	);
+
+	example2
+	|> (\e -> parseClojure(e, println))
+	|> (\e -> readClojure(e))
+	|> (\e -> {
+		println(e);
+		evaluateClojure(env, e)
+	})
+	|> (\nenv -> println(nenv.value));
 }
