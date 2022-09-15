@@ -47,35 +47,6 @@ evaluateSpecialForm(env : ClojureEnv, specialForm : Clojure, args : [Clojure]) -
 		}
 	} else if (name == "fn") {
 		ClojureEnv(env with value = CList(concat([specialForm], args)))
-		// extractParams : (Clojure) -> [string] = \expr -> {
-		// 	switch (expr : Clojure) {
-		// 		CVector(values): map(values, \v -> switch (v : Clojure) {
-		// 			CSymbol(paramName, __): paramName
-		// 			default: getClojureString(v) // Questionable!
-		// 		})
-		// 		default: []
-		// 	};
-			
-		// }
-		// // exprs => [] expr | ([] expr) ([,,] expr) ...
-		// getBodies = \exprs -> {
-		// 	foldiUntil2(exprs, [], \i, acc, expr -> {
-		// 		switch (expr : Clojure) {
-		// 			CList(values): Pair(
-		// 				false,
-		// 				arrayPush(acc, Pair(extractParams(firstElement(values, CNil())), wrapInDo(tail(values))))
-		// 			)
-		// 			default: Pair(
-		// 				true,
-		// 				[Pair(extractParams(expr), wrapInDo(tail(exprs)))]
-		// 			)
-		// 		}
-		// 	})
-		// }
-		// switch (nth(0) : Clojure) {
-		// 	CSymbol(sname, __): ClojureFunction(Some(sname), getBodies(tail(args)))
-		// 	default: ClojureFunction(None(), getBodies(args))
-		// }
 	} else {
 		env;
 	}
@@ -189,10 +160,6 @@ evaluateClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv {
 					evaluateSpecialForm(env, fn, tail(values))
 				} else {
 					efn = evaluateClojure(env, fn);
-					// eargs = fold(tail(values), Pair(efn, []), \p, arg -> unpair(p, \ienv, acc -> {
-					// 	earg = evaluateClojure(ienv, arg);
-					// 	Pair(earg, arrayPush(acc, earg.value))
-					// }));
 					eargs = evaluateManyClojure(efn, tail(values));
 					invokeClojure(eargs.first, castToClojureFunction(efn.value), eargs.second)
 				}
