@@ -239,8 +239,28 @@ evaluateClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv {
 				\nenv, results -> ClojureEnv(nenv with value = CVector(results))
 			)
 		}
-		// CMap
-		// CSet
+		CMap(values): {
+			a = mapConcat(values, unpairC(\a, b -> [a, b]));
+			unpair(
+				evaluateManyClojure(env, a),
+				\nenv, results -> {
+					pairs = filtermapi(results, \i, r -> {
+						if (i % 2 == 0) {
+							Some(Pair(r, elementAt(results, i + 1, CNil())))
+						} else {
+							None()
+						}
+					})
+					ClojureEnv(nenv with value = CMap(pairs))
+				}
+			)
+		}
+		CSet(values): {
+			unpair(
+				evaluateManyClojure(env, values),
+				\nenv, results -> ClojureEnv(nenv with value = CSet(results))
+			)
+		}
 		CList(values): {
 			if (values == []) {
 				ClojureEnv(env with value = CList([]))
@@ -289,6 +309,7 @@ main() {
 	varQuoteExample2 = "(var a)";
 	recurExample = "(loop [a true] (if a (recur false) [1 2 3]))";
 	recurExampleFn = "(def cycle false) (def myfn (fn [a] (if a (do (def cycle true) (recur false)) [1 2 3 cycle]))) (myfn true)";
+	mapSetExample = "(def mymap {:a #{(if false 4 5) 55} :b (if true 3 4)}) mymap";
 
 	env = ClojureEnv(
 		make(makeTree()),
@@ -298,7 +319,7 @@ main() {
 		println
 	);
 
-	recurExampleFn
+	mapSetExample
 	|> (\e -> parseClojure(e, println))
 	|> (\e -> readClojure(e))
 	|> (\e -> {
