@@ -47,9 +47,6 @@ getSpecialForms() -> Tree<string, (ClojureEnv, [Clojure]) -> ClojureEnv> {
 					)
 				}
 			}),
-			Pair("fn", \env, args -> {
-				ClojureEnv(env with value = CList(concat([CSymbol("fn", "")], args)))
-			}),
 			Pair("let", \env, args -> {
 				bindings = switch (nth(args, 0) : Clojure) {
 					CVector(values): values
@@ -69,6 +66,13 @@ getSpecialForms() -> Tree<string, (ClojureEnv, [Clojure]) -> ClojureEnv> {
 			}),
 			Pair("var", \env, args -> {
 				ClojureEnv(env with value = nth(args, 0))
+			}),
+			Pair("fn", \env, args -> {
+				ClojureEnv(
+					env with 
+						value = CList(concat([CSymbol("fn", "")], args)),
+						recursionPoint = Some(CList(concat([CSymbol("fn", "")], args)))
+				)
 			}),
 			Pair("loop", \env, args -> {
 				// TODO: avoid repetition!
@@ -102,8 +106,16 @@ getSpecialForms() -> Tree<string, (ClojureEnv, [Clojure]) -> ClojureEnv> {
 										CVector(vvalues): vvalues
 										default: []
 									};
+									names = filtermapi(bindings, \i, b -> if (i % 2 == 0) Some(getClojureSymbolName(b)) else None());
 									body = wrapInDo(tailFrom(values, 2));
-									Pair(bindings, body);
+									Pair(names, body);
+								} else if (name == "fn") {
+									names = switch (nth(values, 1) : Clojure) {
+										CVector(vvalues): vvalues
+										default: []
+									};
+									body = wrapInDo(tailFrom(values, 2));
+									Pair(map(names, getClojureSymbolName), body);
 								} else {
 									env.onError("Recursion point is set incorrectly!");
 									Pair([], CNil())
@@ -114,14 +126,21 @@ getSpecialForms() -> Tree<string, (ClojureEnv, [Clojure]) -> ClojureEnv> {
 								Pair([], CNil())
 							}
 						}
-						|> unpairC(\bindings, body -> {
-							nenv = setLocalBindings(
-								eargs.first, 
-								filtermapi(bindings, \i, b -> if (i % 2 == 0) Some(getClojureSymbolName(b)) else None()), 
-								eargs.second
-							);
-							// It has to be tail-recursive, but it is not. Maybe it is fine for our small example
-							evaluateClojure(nenv, body)
+						|> unpairC(\names, body -> {
+							// names = filtermapi(bindings, \i, b -> if (i % 2 == 0) Some(getClojureSymbolName(b)) else None());
+							if (length(names) != length(eargs.second)) {
+								env.onError("Recursion arity doesn't match the recursion point!");
+								env;
+							} else {
+								nenv = setLocalBindings(
+									eargs.first, 
+									names,
+									// filtermapi(bindings, \i, b -> if (i % 2 == 0) Some(getClojureSymbolName(b)) else None()), 
+									eargs.second
+								);
+								// It has to be tail-recursive, but it is not. Maybe it is fine for this small example
+								evaluateClojure(nenv, body)
+							}
 						})
 					},
 					\ -> {
@@ -276,6 +295,7 @@ main() {
 	varQuoteExample = "#'a";
 	varQuoteExample2 = "(var a)";
 	recurExample = "(loop [a true] (if a (recur false) [1 2 3]))";
+	recurExampleFn = "(def cycle false) (def myfn (fn [a] (if a (do (def cycle true) (recur false)) [1 2 3 cycle]))) (myfn false)";
 
 	env = ClojureEnv(
 		make(makeTree()),
@@ -285,7 +305,7 @@ main() {
 		println
 	);
 
-	recurExample
+	recurExampleFn
 	|> (\e -> parseClojure(e, println))
 	|> (\e -> readClojure(e))
 	|> (\e -> {
