@@ -69,6 +69,66 @@ getSpecialForms() -> Tree<string, (ClojureEnv, [Clojure]) -> ClojureEnv> {
 			}),
 			Pair("var", \env, args -> {
 				ClojureEnv(env with value = nth(args, 0))
+			}),
+			Pair("loop", \env, args -> {
+				// TODO: avoid repetition!
+				bindings = switch (nth(args, 0) : Clojure) {
+					CVector(values): values
+					default: []
+				};
+				nenv = fold(splitInPairs(bindings, CNil()), env, \ienv, binding -> unpair(binding, \name, value -> {
+					evalue = evaluateClojure(ienv, value);
+					ClojureEnv(evalue with bindings = setTree(ienv.bindings, getClojureSymbolName(name), evalue.value))
+				}));
+				ClojureEnv(
+					evaluateClojure(
+						ClojureEnv(nenv with recursionPoint = Some(CList(concat([CSymbol("loop", "")], args)))), 
+						wrapInDo(tail(args))
+					)
+					with bindings = env.bindings
+				)
+			}),
+			Pair("recur", \env, args -> {
+				eargs = evaluateManyClojure(env, args);
+				eitherFn(
+					env.recursionPoint,
+					\recPoint -> {
+						// We expect it to be either loop or fn. Only loop for now
+						switch (recPoint : Clojure) {
+							CList(values): {
+								name = getClojureSymbolName(nth(values, 0));
+								if (name == "loop") {
+									bindings = switch (nth(values, 1) : Clojure) {
+										CVector(vvalues): vvalues
+										default: []
+									};
+									body = wrapInDo(tailFrom(values, 2));
+									Pair(bindings, body);
+								} else {
+									env.onError("Recursion point is set incorrectly!");
+									Pair([], CNil())
+								}
+							}
+							default: {
+								env.onError("Recursion point is set incorrectly!");
+								Pair([], CNil())
+							}
+						}
+						|> unpairC(\bindings, body -> {
+							nenv = setLocalBindings(
+								eargs.first, 
+								filtermapi(bindings, \i, b -> if (i % 2 == 0) Some(getClojureSymbolName(b)) else None()), 
+								eargs.second
+							);
+							// It has to be tail-recursive, but it is not. Maybe it is fine for our small example
+							evaluateClojure(nenv, body)
+						})
+					},
+					\ -> {
+						env.onError("Recursion point isn't set!");
+						env;
+					}
+				)
 			})
 		])
 	)
@@ -215,15 +275,17 @@ main() {
 	quoteExample = "(def a '(if true 2 3)) a";
 	varQuoteExample = "#'a";
 	varQuoteExample2 = "(var a)";
+	recurExample = "(loop [a true] (if a (recur false) [1 2 3]))";
 
 	env = ClojureEnv(
 		make(makeTree()),
 		makeTree(),
 		CNil(),
+		None(),
 		println
 	);
 
-	varQuoteExample2
+	recurExample
 	|> (\e -> parseClojure(e, println))
 	|> (\e -> readClojure(e))
 	|> (\e -> {

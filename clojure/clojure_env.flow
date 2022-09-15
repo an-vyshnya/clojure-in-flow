@@ -10,6 +10,8 @@ export {
 		// Current value
 		value : Clojure,
 
+		recursionPoint : Maybe<Clojure>,
+
 		onError : (string) -> void
 	);	
 }
