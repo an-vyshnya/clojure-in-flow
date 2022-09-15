@@ -8,6 +8,7 @@ export {
 	getClojureList(clj : Clojure) -> CList;
 	getClojureSymbolName(clj : Clojure) -> string;
 	getClojureBool(clj : Clojure) -> bool;
+	getClojureVectorValues(clj : Clojure) -> [Clojure];
 }
 
 getClojureString(clj : Clojure) -> string {
@@ -43,5 +44,12 @@ getClojureBool(clj : Clojure) -> bool {
 		CBoolean(v): v
 		CNil(): false
 		default: true
+	}
+}
+
+getClojureVectorValues(clj : Clojure) -> [Clojure] {
+	switch (clj : Clojure) {
+		CVector(values): values
+		default: []
 	}
 }
