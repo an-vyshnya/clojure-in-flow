@@ -12,7 +12,7 @@ form =
 		| int "/" int $"ratio"
 		| "0x" $(hexdigit+) $"hex"	// Oct? 
 		| $('0'-'9'+ "." '0'-'9'*) $"s2d"
-		| $("." '0'-'9'+) $"s2d"
+		// | $("." '0'-'9'+) $"s2d" // clashes with . interop, we can live without it
 		| int $"s2i"
 		| "[" ws forms "]" $"vector"
 		| "(" ws forms ")" $"clist"
@@ -56,7 +56,7 @@ symbol = $symbol_;
 symbol_ = nonnumeric (alphanumeric)*;
 
 alphanumeric = nonnumeric | '0'-'9';
-nonnumeric = 'a'-'z' | 'A'-'Z' | '_' | '*' | '+' | '!' | '-' | '_' | '?' | '<' | '>' | '=' | '%' | '&';
+nonnumeric = 'a'-'z' | 'A'-'Z' | '_' | '*' | '+' | '!' | '-' | '_' | '?' | '<' | '>' | '=' | '%' | '&' | '.';
 
 int = $'0'-'9'+;
 

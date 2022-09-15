@@ -1,10 +1,12 @@
 import sandbox/clojure/clojure;
 import runtime;
+import math/math;
 
 export {
 
 	getClojureString(clj : Clojure) -> string;
 	getClojureInt(clj : Clojure) -> int;
+	getClojureDouble(clj : Clojure) -> double;
 	getClojureList(clj : Clojure) -> CList;
 	getClojureSymbolName(clj : Clojure) -> string;
 	getClojureBool(clj : Clojure) -> bool;
@@ -22,6 +24,14 @@ getClojureInt(clj : Clojure) -> int {
 	switch (clj : Clojure) {
 		CInt(i): i
 		default: 0;
+	}
+}
+
+getClojureDouble(clj : Clojure) -> double {
+	switch (clj : Clojure) {
+		CInt(i): i2d(i)
+		CDouble(d): d
+		default: 0.0;
 	}
 }
 

@@ -1,0 +1,26 @@
+import sandbox/clojure/clojure_values;
+
+export {
+
+	getClojureInteropFunctions() -> Tree<string, ([Clojure]) -> Clojure>;
+}
+
+interopFunctions : ref Maybe<Tree<string, ([Clojure]) -> Clojure>> = ref None();
+getClojureInteropFunctions() -> Tree<string, ([Clojure]) -> Clojure> {
+	nth = \args, i -> elementAt(args, i, CNil());
+	onlyOnce(
+		interopFunctions, 
+		\ -> pairs2tree([
+			Pair("add", \args -> {
+				arg1 = getClojureDouble(nth(args, 0));
+				arg2 = getClojureDouble(nth(args, 1));
+				res = arg1 + arg2;
+				if (frac(res) == 0.0) {
+					CInt(trunc(res))
+				} else {
+					CDouble(res)
+				}
+			})
+		])
+	)
+}

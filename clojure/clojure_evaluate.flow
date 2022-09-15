@@ -4,8 +4,9 @@
 // }
 
 import loop;
-import sandbox/clojure/clojure_reader;
+import sandbox/clojure/clojure_lib;
 import sandbox/clojure/clojure_env;
+import sandbox/clojure/clojure_interop;
 
 // Clojure loves paired arrays
 splitInPairs(arr : [?], def : ?) -> [Pair<?, ?>] {
@@ -131,6 +132,9 @@ getSpecialForms() -> Tree<string, (ClojureEnv, [Clojure]) -> ClojureEnv> {
 						env;
 					}
 				)
+			}),
+			Pair(".", \env, args -> {
+				ClojureEnv(env with value = CList(concat([CSymbol(".", "")], args)))
 			})
 		])
 	)
@@ -161,7 +165,7 @@ setVar(env : ClojureEnv, name : string, value : Clojure) -> ClojureEnv {
 	env;
 }
 
-castToClojureFunction(input : Clojure) -> ClojureFunction {
+castToClojureFunction(input : Clojure) -> ClojureInvocable {
 	extractParams : (Clojure) -> [string] = \expr -> {
 		switch (expr : Clojure) {
 			CVector(values): map(values, \v -> switch (v : Clojure) {
@@ -197,6 +201,12 @@ castToClojureFunction(input : Clojure) -> ClojureFunction {
 					CSymbol(sname, __): ClojureFunction(Some(sname), getBodies(tail(args)))
 					default: ClojureFunction(None(), getBodies(args))
 				}
+			} else if (name == ".") {
+				eitherMap(
+					lookupTree(getClojureInteropFunctions(), getClojureSymbolName(elementAt(values, 1, CNil()))),
+					\iopfn -> ClojureInteropFunction(iopfn),
+					nopClojureFinction
+				)
 			} else {
 				nopClojureFinction
 			}
@@ -205,22 +215,27 @@ castToClojureFunction(input : Clojure) -> ClojureFunction {
 	}
 }
 
-invokeClojure(env : ClojureEnv, fn : ClojureFunction, args : [Clojure]) -> ClojureEnv {
-	n = length(args);
-	// TODO: variadic arity?
-	arityM = find(fn.arity, \b -> length(b.first) == n);
-	eitherFn(
-		arityM,
-		unpairC(\params, body -> {
-			nenv = setParametersBindings(env, params, args);
-			resEnv = evaluateClojure(nenv, body);
-			ClojureEnv(resEnv with bindings = env.bindings); //this should be fine, shouldn't it?
-		}),
-		\ -> {
-			// Throw error!
-			env;
+invokeClojure(env : ClojureEnv, fn : ClojureInvocable, args : [Clojure]) -> ClojureEnv {
+	switch (fn : ClojureInvocable) {
+		ClojureFunction(name, arity): {
+			n = length(args);
+			// TODO: variadic arity?
+			arityM = find(fn.arity, \b -> length(b.first) == n);
+			eitherFn(
+				arityM,
+				unpairC(\params, body -> {
+					nenv = setParametersBindings(env, params, args);
+					resEnv = evaluateClojure(nenv, body);
+					ClojureEnv(resEnv with bindings = env.bindings); //this should be fine, shouldn't it?
+				}),
+				\ -> {
+					// Throw error!
+					env;
+				}
+			)
 		}
-	)
+		ClojureInteropFunction(ifn): ClojureEnv(env with value = ifn(args))
+	}
 }
 
 evaluateManyClojure(env : ClojureEnv, forms : [Clojure]) -> Pair<ClojureEnv, [Clojure]> {
@@ -231,6 +246,7 @@ evaluateManyClojure(env : ClojureEnv, forms : [Clojure]) -> Pair<ClojureEnv, [Cl
 }
 
 evaluateClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv {
+	// println("Evaluating " + toString(form));
 	switch (form : Clojure) {
 		CLiteral(): ClojureEnv(env with value = form);
 		CVector(values): {
@@ -310,24 +326,20 @@ main() {
 	recurExample = "(loop [a true] (if a (recur false) [1 2 3]))";
 	recurExampleFn = "(def cycle false) (def myfn (fn [a] (if a (do (def cycle true) (recur false)) [1 2 3 cycle]))) (myfn true)";
 	mapSetExample = "(def mymap {:a #{(if false 4 5) 55} :b (if true 3 4)}) mymap";
+	interopExample = "(+ 2 3)";
 
-	env = ClojureEnv(
-		make(makeTree()),
-		makeTree(),
-		CNil(),
-		None(),
-		println
-	);
+	env0 = makeEmptyClojureEnv();
+	env = evaluateClojure(env0, getClojureStandardLib());
 
-	mapSetExample
+	interopExample
 	|> (\e -> parseClojure(e, println))
 	|> (\e -> readClojure(e))
 	|> (\e -> {
-		println(e);
+		// println(e);
 		evaluateClojure(env, e)
 	})
 	|> (\nenv -> {
-		println(nenv);
+		// println(nenv);
 		println(nenv.value)
 	});
 }

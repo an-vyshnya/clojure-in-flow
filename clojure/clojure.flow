@@ -1,4 +1,5 @@
 import ds/array;
+import ds/tree;
 
 export {
 	Clojure ::= CSymbol, CLiteral, CList, CVector, CMap, CSet, CMeta, CReaderMacro;
@@ -38,7 +39,9 @@ export {
 		CUnqoteSplicing();
 
 	// Surprise, functions don't have literals in clojure, they are special forms instead. So here is a separate type to work with them.
-	ClojureFunction(name : Maybe<string>, arity : [Pair<[string], Clojure>]);
+	ClojureInvocable ::= ClojureFunction, ClojureInteropFunction;
+		ClojureFunction(name : Maybe<string>, arity : [Pair<[string], Clojure>]);
+		ClojureInteropFunction(fn : ([Clojure]) -> Clojure);
 
 	nopClojureFinction = ClojureFunction(None(), [Pair([], CNil())]); // TODO: incorrect!
 

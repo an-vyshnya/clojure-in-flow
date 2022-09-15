@@ -1,0 +1,12 @@
+import sandbox/clojure/clojure_reader;
+
+export {
+
+	getClojureStandardLib() -> Clojure;
+}
+
+getClojureStandardLib() -> Clojure {
+	sourse = "#include sandbox/clojure/std.clojure";
+
+	readClojure(parseClojure(sourse, println))
+}

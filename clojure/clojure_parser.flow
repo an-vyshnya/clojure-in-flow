@@ -1,4 +1,4 @@
-// Produced by  flowcpp gringo/gringo.flow -- file=./sandbox/clojure/clojure.gringo compile=1
+// Produced by  flowcpp gringo/gringo.flow -- file=./clojure/clojure.gringo compile=1
 import text/gringo/dcode_lib;
 import string;
 
@@ -183,28 +183,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 														} else {
 															{
 																pushDCheckpoint(acc);
-																acc.starti ::= acc.i;
-																pushDCheckpoint(acc);
-																if (if (if (if ((matchString(acc, ".") && (if (matchRange(acc, 48, 57)) {
+																if (if (parse_int(acc)) {
 																	{
-																		parseStar(acc, \ -> {
-																			matchRange(acc, 48, 57)
-																		});
-																		true
-																	}
-																} else {
-																	false
-																}))) {
-																	discardDCheckpoint(acc)
-																} else {
-																	restoreDCheckpoint(acc)
-																}) {
-																	addMatched(acc, substring(acc.input, acc.starti, acc.i - acc.starti))
-																} else {
-																	false
-																}) {
-																	{
-																		addVerbatim(acc, "s2d");
+																		addVerbatim(acc, "s2i");
 																		discardDCheckpoint(acc)
 																	}
 																} else {
@@ -214,9 +195,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																} else {
 																	{
 																		pushDCheckpoint(acc);
-																		if (if (parse_int(acc)) {
+																		if (if ((matchString(acc, "[") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, "]"))))))) {
 																			{
-																				addVerbatim(acc, "s2i");
+																				addVerbatim(acc, "vector");
 																				discardDCheckpoint(acc)
 																			}
 																		} else {
@@ -226,9 +207,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																		} else {
 																			{
 																				pushDCheckpoint(acc);
-																				if (if ((matchString(acc, "[") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, "]"))))))) {
+																				if (if ((matchString(acc, "(") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, ")"))))))) {
 																					{
-																						addVerbatim(acc, "vector");
+																						addVerbatim(acc, "clist");
 																						discardDCheckpoint(acc)
 																					}
 																				} else {
@@ -238,9 +219,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																				} else {
 																					{
 																						pushDCheckpoint(acc);
-																						if (if ((matchString(acc, "(") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, ")"))))))) {
+																						if (if ((matchString(acc, "{") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, "}"))))))) {
 																							{
-																								addVerbatim(acc, "clist");
+																								addVerbatim(acc, "map");
 																								discardDCheckpoint(acc)
 																							}
 																						} else {
@@ -250,9 +231,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																						} else {
 																							{
 																								pushDCheckpoint(acc);
-																								if (if ((matchString(acc, "{") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, "}"))))))) {
+																								if (if ((matchString(acc, "#{") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, "}"))))))) {
 																									{
-																										addVerbatim(acc, "map");
+																										addVerbatim(acc, "set");
 																										discardDCheckpoint(acc)
 																									}
 																								} else {
@@ -262,9 +243,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																								} else {
 																									{
 																										pushDCheckpoint(acc);
-																										if (if ((matchString(acc, "#{") && ((parse_ws(acc) && ((parse_forms(acc) && matchString(acc, "}"))))))) {
+																										if (if ((matchString(acc, "'") && parse_form(acc))) {
 																											{
-																												addVerbatim(acc, "set");
+																												addVerbatim(acc, "quote");
 																												discardDCheckpoint(acc)
 																											}
 																										} else {
@@ -274,9 +255,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																										} else {
 																											{
 																												pushDCheckpoint(acc);
-																												if (if ((matchString(acc, "'") && parse_form(acc))) {
+																												if (if ((matchString(acc, "@") && parse_form(acc))) {
 																													{
-																														addVerbatim(acc, "quote");
+																														addVerbatim(acc, "deref");
 																														discardDCheckpoint(acc)
 																													}
 																												} else {
@@ -286,9 +267,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																												} else {
 																													{
 																														pushDCheckpoint(acc);
-																														if (if ((matchString(acc, "@") && parse_form(acc))) {
+																														if (if ((matchString(acc, "#") && parse_form(acc))) {
 																															{
-																																addVerbatim(acc, "deref");
+																																addVerbatim(acc, "dispatch");
 																																discardDCheckpoint(acc)
 																															}
 																														} else {
@@ -298,9 +279,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																														} else {
 																															{
 																																pushDCheckpoint(acc);
-																																if (if ((matchString(acc, "#") && parse_form(acc))) {
+																																if (if ((matchString(acc, "`") && parse_form(acc))) {
 																																	{
-																																		addVerbatim(acc, "dispatch");
+																																		addVerbatim(acc, "syntax_quote");
 																																		discardDCheckpoint(acc)
 																																	}
 																																} else {
@@ -310,9 +291,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																																} else {
 																																	{
 																																		pushDCheckpoint(acc);
-																																		if (if ((matchString(acc, "`") && parse_form(acc))) {
+																																		if (if ((matchString(acc, "~") && parse_form(acc))) {
 																																			{
-																																				addVerbatim(acc, "syntax_quote");
+																																				addVerbatim(acc, "unquote");
 																																				discardDCheckpoint(acc)
 																																			}
 																																		} else {
@@ -322,9 +303,9 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																																		} else {
 																																			{
 																																				pushDCheckpoint(acc);
-																																				if (if ((matchString(acc, "~") && parse_form(acc))) {
+																																				if (if ((matchString(acc, "~@") && parse_form(acc))) {
 																																					{
-																																						addVerbatim(acc, "unquote");
+																																						addVerbatim(acc, "unquote_splicing");
 																																						discardDCheckpoint(acc)
 																																					}
 																																				} else {
@@ -334,47 +315,33 @@ parse_form1(acc : DParseAcc<?>) -> bool {
 																																				} else {
 																																					{
 																																						pushDCheckpoint(acc);
-																																						if (if ((matchString(acc, "~@") && parse_form(acc))) {
+																																						if (if ((matchString(acc, "^") && parse_form(acc))) {
 																																							{
-																																								addVerbatim(acc, "unquote_splicing");
-																																								discardDCheckpoint(acc)
+																																								pushDCheckpoint(acc);
+																																								if (((if (parse_cs(acc)) {
+																																									{
+																																										parseStar(acc, \ -> {
+																																											parse_cs(acc)
+																																										});
+																																										discardDCheckpoint(acc)
+																																									}
+																																								} else {
+																																									restoreDCheckpoint(acc)
+																																								}) && parse_form(acc))) {
+																																									{
+																																										addVerbatim(acc, "metadata");
+																																										discardDCheckpoint(acc)
+																																									}
+																																								} else {
+																																									restoreDCheckpoint(acc)
+																																								}
 																																							}
 																																						} else {
 																																							restoreDCheckpoint(acc)
 																																						}) {
 																																							discardDCheckpoint(acc)
 																																						} else {
-																																							{
-																																								pushDCheckpoint(acc);
-																																								if (if ((matchString(acc, "^") && parse_form(acc))) {
-																																									{
-																																										pushDCheckpoint(acc);
-																																										if (((if (parse_cs(acc)) {
-																																											{
-																																												parseStar(acc, \ -> {
-																																													parse_cs(acc)
-																																												});
-																																												discardDCheckpoint(acc)
-																																											}
-																																										} else {
-																																											restoreDCheckpoint(acc)
-																																										}) && parse_form(acc))) {
-																																											{
-																																												addVerbatim(acc, "metadata");
-																																												discardDCheckpoint(acc)
-																																											}
-																																										} else {
-																																											restoreDCheckpoint(acc)
-																																										}
-																																									}
-																																								} else {
-																																									restoreDCheckpoint(acc)
-																																								}) {
-																																									discardDCheckpoint(acc)
-																																								} else {
-																																									restoreDCheckpoint(acc)
-																																								}
-																																							}
+																																							restoreDCheckpoint(acc)
 																																						}
 																																					}
 																																				}
@@ -656,7 +623,7 @@ parse_alphanumeric(acc : DParseAcc<?>) -> bool {
 }
 
 parse_nonnumeric(acc : DParseAcc<?>) -> bool {
-	matchRange(acc, 97, 122) || (matchRange(acc, 65, 90) || (matchString(acc, "_") || (matchString(acc, "*") || (matchString(acc, "+") || (matchString(acc, "!") || (matchString(acc, "-") || (matchString(acc, "_") || (matchString(acc, "?") || (matchString(acc, "<") || (matchString(acc, ">") || (matchString(acc, "=") || (matchString(acc, "%") || matchString(acc, "&")))))))))))))
+	matchRange(acc, 97, 122) || (matchRange(acc, 65, 90) || (matchString(acc, "_") || (matchString(acc, "*") || (matchString(acc, "+") || (matchString(acc, "!") || (matchString(acc, "-") || (matchString(acc, "_") || (matchString(acc, "?") || (matchString(acc, "<") || (matchString(acc, ">") || (matchString(acc, "=") || (matchString(acc, "%") || (matchString(acc, "&") || matchString(acc, "."))))))))))))))
 }
 
 parse_int(acc : DParseAcc<?>) -> bool {
