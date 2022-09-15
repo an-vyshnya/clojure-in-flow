@@ -19,37 +19,38 @@ wrapInDo(exprs : [Clojure]) -> Clojure {
 	))
 }
 
-isSpecialForm(name : Clojure) -> bool {
-	contains(["def", "if", "fn", "do"], getClojureSymbolName(name))
-}
-
-evaluateSpecialForm(env : ClojureEnv, specialForm : Clojure, args : [Clojure]) -> ClojureEnv {
-	nth = \i -> elementAt(args, i, CNil());
-	name = getClojureSymbolName(specialForm);
-	
-	if (name == "def") {
-		setVar(env, getClojureSymbolName(nth(0)), nth(1))
-	} else if (name == "if") {
-		cond = evaluateClojure(env, nth(0));
-		if (getClojureBool(cond.value)) { 
-			evaluateClojure(cond, nth(1))
-		} else {
-			evaluateClojure(cond, nth(2))
-		}
-	} else if (name == "do") {
-		if (args == []) {
-			ClojureEnv(env with value = CNil())
-		} else {
-			unpair(
-				evaluateManyClojure(env, args),
-				\ienv, results -> ClojureEnv(ienv with value = lastElement(results, CNil()))
-			)
-		}
-	} else if (name == "fn") {
-		ClojureEnv(env with value = CList(concat([specialForm], args)))
-	} else {
-		env;
-	}
+specialForms : ref Maybe<Tree<string, (ClojureEnv, [Clojure]) -> ClojureEnv>> = ref None();
+getSpecialForms() -> Tree<string, (ClojureEnv, [Clojure]) -> ClojureEnv> {
+	nth = \args, i -> elementAt(args, i, CNil());
+	onlyOnce(
+		specialForms, 
+		\ -> pairs2tree([
+			Pair("def", \env, args -> {
+				setVar(env, getClojureSymbolName(nth(args, 0)), nth(args, 1))
+			}),
+			Pair("if", \env, args -> {
+				cond = evaluateClojure(env, nth(args, 0));
+				if (getClojureBool(cond.value)) { 
+					evaluateClojure(cond, nth(args, 1))
+				} else {
+					evaluateClojure(cond, nth(args, 2))
+				}
+			}),
+			Pair("do", \env, args -> {
+				if (args == []) {
+					ClojureEnv(env with value = CNil())
+				} else {
+					unpair(
+						evaluateManyClojure(env, args),
+						\ienv, results -> ClojureEnv(ienv with value = lastElement(results, CNil()))
+					)
+				}
+			}),
+			Pair("fn", \env, args -> {
+				ClojureEnv(env with value = CList(concat([CSymbol("fn", "")], args)))
+			})
+		])
+	)
 }
 
 setLocalBindings(env : ClojureEnv, names : [string], values : [Clojure]) -> ClojureEnv {
@@ -153,13 +154,16 @@ evaluateClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv {
 				ClojureEnv(env with value = CList([]))
 			} else {
 				fn = values[0]; // we have it for sure
-				if (isSpecialForm(fn)) {
-					evaluateSpecialForm(env, fn, tail(values))
-				} else {
-					efn = evaluateClojure(env, fn);
-					eargs = evaluateManyClojure(efn, tail(values));
-					invokeClojure(eargs.first, castToClojureFunction(efn.value), eargs.second)
-				}
+				args = tail(values);
+				eitherFn(
+					lookupTree(getSpecialForms(), getClojureSymbolName(fn)),
+					\specialFormFn -> specialFormFn(env, args),
+					\ -> {
+						efn = evaluateClojure(env, fn);
+						eargs = evaluateManyClojure(efn, args);
+						invokeClojure(eargs.first, castToClojureFunction(efn.value), eargs.second)
+					}
+				)
 			}
 		}
 		// TODO: qualification?
@@ -185,7 +189,7 @@ evaluateClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv {
 main() {
 	example = "(if false 1 2)";
 	example2 = "((fn [a b c] (if a b c)) true 4 5)";
-	example3 = "(def var 5) (if true var 7)";
+	example3 = "(def var 5) (def condvar true) (if condvar var 7)";
 
 	env = ClojureEnv(
 		make(makeTree()),
