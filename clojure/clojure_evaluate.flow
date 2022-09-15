@@ -28,7 +28,7 @@ evaluateSpecialForm(env : ClojureEnv, specialForm : Clojure, args : [Clojure]) -
 	name = getClojureSymbolName(specialForm);
 	
 	if (name == "def") {
-		setVar(env, name, nth(0))
+		setVar(env, getClojureSymbolName(nth(0)), nth(1))
 	} else if (name == "if") {
 		cond = evaluateClojure(env, nth(0));
 		if (getClojureBool(cond.value)) { 
@@ -63,10 +63,7 @@ setVar(env : ClojureEnv, name : string, value : Clojure) -> ClojureEnv {
 	eitherFn(
 		lookupTree(getValue(env.vars), name),
 		\valueB -> next(valueB, value),
-		\ -> {
-			// Throw error
-
-		}
+		\ -> updateBehaviour(env.vars, \vars -> setTree(vars, name, make(value)))
 	);
 	env;
 }
@@ -188,6 +185,7 @@ evaluateClojure(env : ClojureEnv, form : Clojure) -> ClojureEnv {
 main() {
 	example = "(if false 1 2)";
 	example2 = "((fn [a b c] (if a b c)) true 4 5)";
+	example3 = "(def var 5) (if true var 7)";
 
 	env = ClojureEnv(
 		make(makeTree()),
@@ -196,12 +194,15 @@ main() {
 		println
 	);
 
-	example2
+	example3
 	|> (\e -> parseClojure(e, println))
 	|> (\e -> readClojure(e))
 	|> (\e -> {
 		println(e);
 		evaluateClojure(env, e)
 	})
-	|> (\nenv -> println(nenv.value));
+	|> (\nenv -> {
+		println(nenv);
+		println(nenv.value)
+	});
 }
