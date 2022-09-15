@@ -59,6 +59,13 @@ readClojure(clj : Clojure) -> Clojure {
 						)
 					)
 				}
+				CReaderMacro(mtype, mvalue): switch (mtype : CReaderMacroType) {
+					CQuote(): switch (mvalue : Clojure) {
+						CSymbol(name, __): CList([CSymbol("var", ""), CSymbol(name, "")])
+						default: value //err
+					}
+					default: value //err
+				}
 				default: clj
 			}
 			CSyntaxQuote(): value // TODO: gensyms!

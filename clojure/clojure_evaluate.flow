@@ -66,6 +66,9 @@ getSpecialForms() -> Tree<string, (ClojureEnv, [Clojure]) -> ClojureEnv> {
 			}),
 			Pair("quote", \env, args -> {
 				ClojureEnv(env with value = nth(args, 0))
+			}),
+			Pair("var", \env, args -> {
+				ClojureEnv(env with value = nth(args, 0))
 			})
 		])
 	)
@@ -210,6 +213,8 @@ main() {
 	example3 = "(def var 5) (def condvar true) (if condvar var 7)";
 	letExample = "(def a 50) (def var 5) (def c (let [a var b 8] (if false a b))) [a c]";
 	quoteExample = "(def a '(if true 2 3)) a";
+	varQuoteExample = "#'a";
+	varQuoteExample2 = "(var a)";
 
 	env = ClojureEnv(
 		make(makeTree()),
@@ -218,7 +223,7 @@ main() {
 		println
 	);
 
-	quoteExample
+	varQuoteExample2
 	|> (\e -> parseClojure(e, println))
 	|> (\e -> readClojure(e))
 	|> (\e -> {
